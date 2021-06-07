@@ -38,8 +38,11 @@ export default class MagicCitation {
    * Initialize basic data
    * @param api
    */
-  constructor({ api }) {
+  constructor({ config, api }) {
     this.api = api;
+    this.config = config;
+
+    this.searchEndpoint = this.config.endpointUrl;
 
     this.nodes = {
       toolButton: null,
@@ -50,8 +53,6 @@ export default class MagicCitation {
     }
 
     this.state = false;
-
-    this.searchEndpoint = 'http://localhost:3000/';
 
     this.tagName = 'A';
 
