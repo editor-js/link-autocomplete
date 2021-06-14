@@ -198,6 +198,8 @@ export default class MagicCitation {
     const anchorElement = text instanceof Element ? text : text.parentElement;
 
     this.state = !!anchorElement.closest(this.tagName);
+
+    this.nodes.toolButton.classList.toggle(this.CSS.isActive, this.state);
   }
 
   /**
@@ -237,7 +239,8 @@ export default class MagicCitation {
       buttonUnlink: 'ce-inline-tool--unlink',
       input: 'ce-inline-tool-input',
       inputShowed: 'ce-inline-tool-input--showed',
-      searchItem: 'ce-magic-citation__search-item'
+      searchItem: 'ce-magic-citation__search-item',
+      isActive: 'ce-inline-tool--active'
     };
   }
 }
