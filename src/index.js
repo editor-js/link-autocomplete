@@ -199,7 +199,17 @@ export default class MagicCitation {
 
     this.state = !!anchorElement.closest(this.tagName);
 
-    this.nodes.toolButton.classList.toggle(this.CSS.isActive, this.state);
+
+    if (this.state) {
+      /**
+       * Fill input value with link href
+       */
+      const hrefAttr = anchorElement.getAttribute('href');
+
+      this.nodes.searchInput.value = hrefAttr !== 'null' ? hrefAttr : '';
+
+      this.nodes.toolButton.classList.toggle(this.CSS.isActive, this.state);
+    }
   }
 
   /**
