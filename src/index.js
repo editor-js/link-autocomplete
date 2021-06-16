@@ -45,7 +45,9 @@ export default class MagicCitation {
     this.searchEndpoint = this.config.endpointUrl;
 
     this.nodes = {
-      toolButton: null,
+      toolButtons: null,
+      toolButtonLink: null,
+      toolButtonUnlink: null,
       actionsWrapper: null,
       searchInput: null,
       searchResults: null,
@@ -63,12 +65,26 @@ export default class MagicCitation {
   }
 
   render() {
-    this.nodes.toolButton = document.createElement('div');
-    this.nodes.toolButton.textContent = 'M';
+    this.nodes.toolButtons = document.createElement('div');
 
-    this.nodes.toolButton.classList.add(this.CSS.button, this.CSS.toolButtonWrapper);
+    this.nodes.toolButtonLink = document.createElement('div');
+    this.nodes.toolButtonLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 10" width="14" height="10">\n' +
+        '  <path d="M6 0v2H5a3 3 0 000 6h1v2H5A5 5 0 115 0h1zm2 0h1a5 5 0 110 10H8V8h1a3 3 0 000-6H8V0zM5 4h4a1 1 0 110 2H5a1 1 0 110-2z"/>\n' +
+        '</svg>\n';
 
-    return this.nodes.toolButton;
+    this.nodes.toolButtonUnlink = document.createElement('div');
+    this.nodes.toolButtonUnlink.innerHTML += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 11" width="15" height="11">\n' +
+        '  <path d="M13.073 2.099l-1.448 1.448A3 3 0 009 2H8V0h1c1.68 0 3.166.828 4.073 2.099zM6.929 4l-.879.879L7.172 6H5a1 1 0 110-2h1.929zM6 0v2H5a3 3 0 100 6h1v2H5A5 5 0 115 0h1zm6.414 7l2.122 2.121-1.415 1.415L11 8.414l-2.121 2.122L7.464 9.12 9.586 7 7.464 4.879 8.88 3.464 11 5.586l2.121-2.122 1.415 1.415L12.414 7z"/>\n' +
+        '</svg>\n';
+
+    this.nodes.toolButtonUnlink.classList.add(this.CSS.hidden);
+
+    this.nodes.toolButtons.appendChild(this.nodes.toolButtonLink);
+    this.nodes.toolButtons.appendChild(this.nodes.toolButtonUnlink);
+
+    this.nodes.toolButtons.classList.add(this.CSS.button, this.CSS.toolButtonWrapper);
+
+    return this.nodes.toolButtons;
   }
 
   /**
@@ -181,11 +197,24 @@ export default class MagicCitation {
       return;
     }
 
-    // @todo show icon "remove link"
-
     this.range = range;
 
+    console.log('range', range);
+
+    console.log('surround');
+
     this.nodes.searchInput.classList.add(this.CSS.inputShowed);
+
+    if (this.nodes.toolButtonUnlink.classList.contains(this.CSS.isActive)) {
+      const anchorElement = range.commonAncestorContainer instanceof Element ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
+      const linkElement = anchorElement.closest(this.tagName);
+
+      const spanContent = document.createElement('SPAN');
+
+      spanContent.innerHTML = linkElement.innerHTML;
+
+      linkElement.parentNode.replaceChild(spanContent, linkElement)
+    }
   }
 
   checkState(selection) {
@@ -207,8 +236,11 @@ export default class MagicCitation {
       const hrefAttr = anchorElement.getAttribute('href');
 
       this.nodes.searchInput.value = hrefAttr !== 'null' ? hrefAttr : '';
+      this.nodes.searchInput.classList.add(this.CSS.inputShowed);
 
-      this.nodes.toolButton.classList.toggle(this.CSS.isActive, this.state);
+      this.nodes.toolButtonLink.classList.add(this.CSS.hidden);
+      this.nodes.toolButtonUnlink.classList.remove(this.CSS.hidden);
+      this.nodes.toolButtonUnlink.classList.add(this.CSS.isActive);
     }
   }
 
@@ -250,7 +282,8 @@ export default class MagicCitation {
       input: 'ce-inline-tool-input',
       inputShowed: 'ce-inline-tool-input--showed',
       searchItem: 'ce-magic-citation__search-item',
-      isActive: 'ce-inline-tool--active'
+      isActive: 'ce-inline-tool--active',
+      hidden: 'ce-magic-citation__hidden'
     };
   }
 }

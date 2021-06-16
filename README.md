@@ -2,8 +2,6 @@
 
 TODO:
 - add example gif to readme
-- add icon
-- add link removing
 - add loader 
 - if no this.config.endpointUrl then do not try to send a request
 - focus input field on tool click
