@@ -228,10 +228,9 @@ export default class MagicCitation {
     this.range = range;
 
 
-    const selectedText = window.getSelection().toString();
-
+    // const selectedText = window.getSelection().toString();
+    // this.nodes.searchInput.value = selectedText;
     this.nodes.searchInput.classList.add(this.CSS.inputShowed);
-    this.nodes.searchInput.value = selectedText;
 
 
 
