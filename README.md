@@ -7,12 +7,6 @@ TODO:
 - focus input field on tool click
 - use fake selection
 
-logic:
-
-1. selected text does not contain MC
-2. selected text contains MC 
-3. selected text contains link
-
 -->
 
 # Magic Citation

@@ -204,8 +204,7 @@ export default class MagicCitation {
 
     this.range.insertNode(link);
 
-    // @todo hide toolbar
-    this.nodes.actionsWrapper.hidden = true;
+    this.api.inlineToolbar.close();
   }
 
   clearSearchList() {
@@ -244,7 +243,8 @@ export default class MagicCitation {
 
       spanContent.innerHTML = linkElement.innerHTML;
 
-      linkElement.parentNode.replaceChild(spanContent, linkElement)
+      linkElement.parentNode.replaceChild(spanContent, linkElement);
+      this.api.inlineToolbar.close();
     }
   }
 
