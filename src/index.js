@@ -176,7 +176,11 @@ export default class MagicCitation {
   }
 
   searchItemClick(event, item) {
-    this.wrapTextToLink(item.href);
+    const href = item.href;
+
+    delete item.href;
+
+    this.wrapTextToLink(href, item);
   }
 
   /**
@@ -196,11 +200,15 @@ export default class MagicCitation {
     console.error('Link is not a valid');
   }
 
-  wrapTextToLink(linkValue) {
+  wrapTextToLink(linkValue, additionalData) {
     let link = document.createElement(this.tagName);
 
     link.appendChild(this.range.extractContents());
     link.href = linkValue;
+
+    Object.keys(additionalData).forEach(key => {
+      link.dataset[key] = additionalData[key];
+    })
 
     this.range.insertNode(link);
 
