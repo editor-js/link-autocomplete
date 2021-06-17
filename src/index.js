@@ -39,10 +39,13 @@ export default class MagicCitation {
    * @param api
    */
   constructor({ config, api }) {
+    console.log('constructor()');
+
     this.api = api;
     this.config = config;
 
-    this.searchEndpoint = this.config.endpointUrl;
+    this.searchEndpointUrl = this.config.endpointUrl;
+    this.searchQueryParam = this.config.queryParam;
 
     this.nodes = {
       toolButtons: null,
@@ -54,8 +57,6 @@ export default class MagicCitation {
       loader: null
     }
 
-    this.state = false;
-
     this.tagName = 'A';
 
     /**
@@ -64,39 +65,57 @@ export default class MagicCitation {
     this.ENTER_KEY = 13;
   }
 
+  /**
+   * Create element with buttons for toolbar
+   * @return {HTMLDivElement}
+   */
   render() {
+    /**
+     * Create wrapper for buttons
+     * @type {HTMLDivElement}
+     */
     this.nodes.toolButtons = document.createElement('div');
+    this.nodes.toolButtons.classList.add(this.CSS.button, this.CSS.toolButtonWrapper);
 
+    /**
+     * Create Link button
+     * @type {HTMLDivElement}
+     */
     this.nodes.toolButtonLink = document.createElement('div');
+    // this.nodes.toolButtonLink.innerHTML += 'M';
     this.nodes.toolButtonLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 10" width="14" height="10">\n' +
         '  <path d="M6 0v2H5a3 3 0 000 6h1v2H5A5 5 0 115 0h1zm2 0h1a5 5 0 110 10H8V8h1a3 3 0 000-6H8V0zM5 4h4a1 1 0 110 2H5a1 1 0 110-2z"/>\n' +
         '</svg>\n';
+    this.nodes.toolButtons.appendChild(this.nodes.toolButtonLink);
 
+    /**
+     * Create Unlink button
+     * @type {HTMLDivElement}
+     */
     this.nodes.toolButtonUnlink = document.createElement('div');
+    // this.nodes.toolButtonUnlink.innerHTML += 'N';
     this.nodes.toolButtonUnlink.innerHTML += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 11" width="15" height="11">\n' +
         '  <path d="M13.073 2.099l-1.448 1.448A3 3 0 009 2H8V0h1c1.68 0 3.166.828 4.073 2.099zM6.929 4l-.879.879L7.172 6H5a1 1 0 110-2h1.929zM6 0v2H5a3 3 0 100 6h1v2H5A5 5 0 115 0h1zm6.414 7l2.122 2.121-1.415 1.415L11 8.414l-2.121 2.122L7.464 9.12 9.586 7 7.464 4.879 8.88 3.464 11 5.586l2.121-2.122 1.415 1.415L12.414 7z"/>\n' +
         '</svg>\n';
-
-    this.nodes.toolButtonUnlink.classList.add(this.CSS.hidden);
-
-    this.nodes.toolButtons.appendChild(this.nodes.toolButtonLink);
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonUnlink);
-
-    this.nodes.toolButtons.classList.add(this.CSS.button, this.CSS.toolButtonWrapper);
+    this.nodes.toolButtonUnlink.classList.add(this.CSS.hidden);
 
     return this.nodes.toolButtons;
   }
 
   /**
-   * Input for the link
+   * Render actions element
+   *
+   * @return {HTMLDivElement}
    */
   renderActions() {
+    console.log('renderActions()');
+
     this.nodes.actionsWrapper = document.createElement('DIV');
 
     this.nodes.searchInput = document.createElement('INPUT');
     this.nodes.searchInput.placeholder = 'Add a link or search resources';
     this.nodes.searchInput.classList.add(this.CSS.input, this.CSS.inputWrapper);
-    // this.nodes.searchInput.classList.add(this.CSS.inputHidden
 
     this.nodes.searchResults = document.createElement('DIV');
 
@@ -119,6 +138,8 @@ export default class MagicCitation {
     this.nodes.searchInput.addEventListener('input', (event) => {
       const searchString = event.target.value;
 
+      console.log('checkForValidUrl', this.checkForValidUrl(searchString));
+
       clearTimeout(typingTimer);
 
       if (!searchString || !searchString.trim()) {
@@ -137,7 +158,7 @@ export default class MagicCitation {
           const searchItem = document.createElement('DIV');
 
           searchItem.classList.add(this.CSS.searchItem);
-          searchItem.innerText = item.title;
+          searchItem.innerText = item.name;
 
           searchItem.addEventListener('click', (event) => {
             this.searchItemClick(event, item);
@@ -155,21 +176,27 @@ export default class MagicCitation {
   }
 
   searchItemClick(event, item) {
-    this.wrapTextToLink(item.link);
+    this.wrapTextToLink(item.href);
   }
 
+  /**
+   * Enter was pressed
+   * Then try to process input as pasted link
+   *
+   * @param {Event} event
+   */
   enterPressed(event) {
-    console.log('EVENT PRESSED');
     let value = this.nodes.searchInput.value || '';
 
-    this.wrapTextToLink(value);
+    if (this.checkForValidUrl(value)) {
+      this.wrapTextToLink(value);
+      return;
+    }
+
+    console.error('Link is not a valid');
   }
 
   wrapTextToLink(linkValue) {
-    // @todo add protocol to link
-
-    console.log('LINK to be pasted', linkValue);
-
     let link = document.createElement(this.tagName);
 
     link.appendChild(this.range.extractContents());
@@ -193,17 +220,21 @@ export default class MagicCitation {
    * @param {Range} range - range to wrap with link
    */
   surround(range) {
+    console.log('surround()');
+
     if (!range) {
       return;
     }
 
     this.range = range;
 
-    console.log('range', range);
 
-    console.log('surround');
+    const selectedText = window.getSelection().toString();
 
     this.nodes.searchInput.classList.add(this.CSS.inputShowed);
+    this.nodes.searchInput.value = selectedText;
+
+
 
     if (this.nodes.toolButtonUnlink.classList.contains(this.CSS.isActive)) {
       const anchorElement = range.commonAncestorContainer instanceof Element ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
@@ -217,7 +248,14 @@ export default class MagicCitation {
     }
   }
 
+  /**
+   * Check for a tool's state
+   *
+   * @param selection
+   */
   checkState(selection) {
+    console.log('checkState()');
+
     const text = selection.anchorNode;
 
     if (!text) {
@@ -225,11 +263,12 @@ export default class MagicCitation {
     }
 
     const anchorElement = text instanceof Element ? text : text.parentElement;
+    const closestTagElement = anchorElement.closest(this.tagName);
 
-    this.state = !!anchorElement.closest(this.tagName);
+    // this.nodes.searchInput.value = anchorElement.innerText;
+    // this.nodes.searchInput.classList.add(this.CSS.inputShowed);
 
-
-    if (this.state) {
+    if (!!anchorElement.closest(this.tagName)) {
       /**
        * Fill input value with link href
        */
@@ -242,6 +281,12 @@ export default class MagicCitation {
       this.nodes.toolButtonUnlink.classList.remove(this.CSS.hidden);
       this.nodes.toolButtonUnlink.classList.add(this.CSS.isActive);
     }
+  }
+
+  checkForValidUrl(textString) {
+    const regex = new RegExp(/(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/);
+
+    return regex.test(textString);
   }
 
   /**
@@ -257,9 +302,9 @@ export default class MagicCitation {
      *
      * @type {AxiosResponse<*>}
      */
-    const searchData = (await axios.get(this.searchEndpoint, {
+    const searchData = (await axios.get(this.searchEndpointUrl, {
       params: {
-        searchString
+        [this.searchQueryParam]: searchString
       }
     })).data;
 

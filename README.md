@@ -5,6 +5,13 @@ TODO:
 - add loader 
 - if no this.config.endpointUrl then do not try to send a request
 - focus input field on tool click
+- use fake selection
+
+logic:
+
+1. selected text does not contain MC
+2. selected text contains MC 
+3. selected text contains link
 
 -->
 
@@ -52,6 +59,7 @@ var editor = EditorJS({
       class: MagicCitation,
       config: {
         endpointUrl: 'http://localhost:3000/',
+        queryParam: 'search'
       }
     }
   },
@@ -66,6 +74,8 @@ There is a one param which may be configured.
 
 `endpointUrl` — url to the server's endpoint for getting suggestions as links.
 
+`queryParam` — param name to be send with search string.
+
 If there is no `endpointUrl` then tool will work only for pasted links.
 
 ## Server response data format
@@ -77,12 +87,12 @@ for each item.
 ```
 [
   {
-    title: `The first item`,
-    link: `https://codex.so/media`
+    href: `https://codex.so/media`,
+    name: `The first item`,
   },
   {
-    title: `The second item`,
-    link: `https://codex.so/editor`
+    href: `https://codex.so/editor`,
+    name: `The second item`
   },
   ...
 ]
