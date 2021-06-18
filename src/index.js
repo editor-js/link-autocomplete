@@ -6,6 +6,12 @@ import './../styles/index.pcss';
 import axios from "axios";
 
 /**
+ * @typedef {Object} SearchItemData
+ * @property {string} name
+ * @property {string} href
+ */
+
+/**
  * MagicCitation Tool for EditorJS
  */
 export default class MagicCitation {
@@ -153,8 +159,6 @@ export default class MagicCitation {
         this.clearSearchList();
 
         searchData.forEach(item => {
-          console.log('search item', item);
-
           const searchItem = document.createElement('DIV');
 
           searchItem.classList.add(this.CSS.searchItem);
@@ -175,6 +179,12 @@ export default class MagicCitation {
     return this.nodes.actionsWrapper;
   }
 
+  /**
+   * Process click on the search item
+   *
+   * @param {MouseEvent} event
+   * @param {SearchItemData} item
+   */
   searchItemClick(event, item) {
     const href = item.href;
 

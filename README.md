@@ -75,8 +75,10 @@ If there is no `endpointUrl` then tool will work only for pasted links.
 ## Server response data format
 
 For endpoint requests server should answer with a JSON data
-as array of link items. Title and link params are required
-for each item.
+as array of link items. `name` and `href` params are required
+for each item. Content-Type: `application/json`.
+
+You can also return any other fields which will be stored in a link dataset.
 
 ```
 [
@@ -92,8 +94,6 @@ for each item.
 ]
 ```
 
-Content-Type: `application/json`
-
 ## Output data
 
 Marked text will be wrapped with a `a` tag as a usual link.
@@ -102,7 +102,7 @@ Marked text will be wrapped with a `a` tag as a usual link.
 {
     "type" : "text",
     "data" : {
-        "text" : "Create a directory for your module, enter it and run <a href=\"https://codex.so/\">npm init</a> command."
+        "text" : "Create a directory for your module, enter it and run <a href=\"https://codex.so/\" data-name=\"CodeX Site\">npm init</a> command."
     }
 }
 ```
