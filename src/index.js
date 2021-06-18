@@ -127,6 +127,9 @@ export default class MagicCitation {
 
     let typingTimer;
 
+    /**
+     * Listen to pressed enter key
+     */
     this.nodes.searchInput.addEventListener('keydown', (event) => {
       if (event.keyCode !== this.ENTER_KEY) {
         return;
@@ -138,13 +141,29 @@ export default class MagicCitation {
         return;
       }
 
-      this.enterPressed(event);
+      if (!this.checkForValidUrl(searchString)) {
+        console.error('Link is not a valid');
+        return;
+      }
+
+      /**
+       * Get link element
+       * @type {HTMLElement}
+       */
+      const linkElement = this.wrapTextToLink(searchString);
+
+      /**
+       * Insert link
+       */
+      this.range.insertNode(linkElement);
+      this.api.inlineToolbar.close();
     })
 
+    /**
+     * Listen to input
+     */
     this.nodes.searchInput.addEventListener('input', (event) => {
       const searchString = event.target.value;
-
-      console.log('checkForValidUrl', this.checkForValidUrl(searchString));
 
       clearTimeout(typingTimer);
 
@@ -165,7 +184,21 @@ export default class MagicCitation {
           searchItem.innerText = item.name;
 
           searchItem.addEventListener('click', (event) => {
-            this.searchItemClick(event, item);
+            const href = item.href;
+
+            delete item.href;
+
+            /**
+             * Get link element
+             * @type {HTMLElement}
+             */
+            const linkElement = this.wrapTextToLink(searchString, item);
+
+            /**
+             * Insert link
+             */
+            this.range.insertNode(linkElement);
+            this.api.inlineToolbar.close();
           });
 
           this.nodes.searchResults.appendChild(searchItem);
@@ -180,51 +213,26 @@ export default class MagicCitation {
   }
 
   /**
-   * Process click on the search item
    *
-   * @param {MouseEvent} event
-   * @param {SearchItemData} item
+   * @param linkValue
+   * @param additionalData
    */
-  searchItemClick(event, item) {
-    const href = item.href;
+  wrapTextToLink(linkValue, additionalData) {
+    let linkElement = document.createElement(this.tagName);
 
-    delete item.href;
+    linkElement.appendChild(this.range.extractContents());
+    linkElement.href = linkValue;
 
-    this.wrapTextToLink(href, item);
+    Object.keys(additionalData).forEach(key => {
+      linkElement.dataset[key] = additionalData[key];
+    })
+
+    return linkElement;
   }
 
   /**
-   * Enter was pressed
-   * Then try to process input as pasted link
-   *
-   * @param {Event} event
+   * Remove search result elements
    */
-  enterPressed(event) {
-    let value = this.nodes.searchInput.value || '';
-
-    if (this.checkForValidUrl(value)) {
-      this.wrapTextToLink(value);
-      return;
-    }
-
-    console.error('Link is not a valid');
-  }
-
-  wrapTextToLink(linkValue, additionalData) {
-    let link = document.createElement(this.tagName);
-
-    link.appendChild(this.range.extractContents());
-    link.href = linkValue;
-
-    Object.keys(additionalData).forEach(key => {
-      link.dataset[key] = additionalData[key];
-    })
-
-    this.range.insertNode(link);
-
-    this.api.inlineToolbar.close();
-  }
-
   clearSearchList() {
     while (this.nodes.searchResults.firstChild) {
       this.nodes.searchResults.firstChild.remove()
@@ -245,12 +253,7 @@ export default class MagicCitation {
 
     this.range = range;
 
-
-    // const selectedText = window.getSelection().toString();
-    // this.nodes.searchInput.value = selectedText;
     this.nodes.searchInput.classList.add(this.CSS.inputShowed);
-
-
 
     if (this.nodes.toolButtonUnlink.classList.contains(this.CSS.isActive)) {
       const anchorElement = range.commonAncestorContainer instanceof Element ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
@@ -268,11 +271,9 @@ export default class MagicCitation {
   /**
    * Check for a tool's state
    *
-   * @param selection
+   * @param {Selection} selection
    */
   checkState(selection) {
-    console.log('checkState()');
-
     const text = selection.anchorNode;
 
     if (!text) {
@@ -285,7 +286,7 @@ export default class MagicCitation {
     // this.nodes.searchInput.value = anchorElement.innerText;
     // this.nodes.searchInput.classList.add(this.CSS.inputShowed);
 
-    if (!!anchorElement.closest(this.tagName)) {
+    if (!!closestTagElement) {
       /**
        * Fill input value with link href
        */
@@ -300,6 +301,13 @@ export default class MagicCitation {
     }
   }
 
+  /**
+   * Is string a valid url
+   *
+   * @param {string} textString
+   *
+   * @return {boolean}
+   */
   checkForValidUrl(textString) {
     const regex = new RegExp(/(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/);
 
