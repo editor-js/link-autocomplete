@@ -3,7 +3,19 @@
  */
 import './../styles/index.pcss';
 
-import axios from "axios";
+/**
+ * Import deps
+ */
+import axios from 'axios';
+import notifier from 'codex-notifier';
+
+/**
+ * Import functions
+ */
+import { checkForValidUrl } from './check-for-valid-url';
+import { Dom } from './utils/dom';
+import { SelectionUtils } from './utils/selection';
+import {Utils} from "./utils/utils";
 
 /**
  * @typedef {Object} SearchItemData
@@ -11,10 +23,18 @@ import axios from "axios";
  * @property {string} href
  */
 
+const DICTIONARY = {
+  pasteOrSearch: 'Paste or Search',
+  pasteALink: 'Paste a link',
+  searchRequestError: 'Cannot process search request because of',
+  invalidServerData: 'Server responded with invalid data',
+  invalidUrl: 'Link URL is invalid'
+}
+
 /**
- * MagicCitation Tool for EditorJS
+ * Link Autocomplete Tool for EditorJS
  */
-export default class MagicCitation {
+export default class LinkAutocomplete {
   /**
    * Specifies Tool as Inline Toolbar Tool
    *
@@ -32,11 +52,45 @@ export default class MagicCitation {
    */
   static get sanitize() {
     return {
-      a: {
-        href: true,
-        target: '_blank',
-        rel: 'nofollow',
-      },
+      a: true,
+    };
+  }
+
+  /**
+   * Title for hover-tooltip
+   */
+  static get title() {
+    return 'Link Autocomplete';
+  }
+
+  /**
+   * Styles
+   *
+   * @private
+   */
+  get CSS() {
+    return {
+      button: 'ce-inline-tool',
+      iconWrapper: 'ce-link-autocomplete__icon-wrapper',
+
+      hidden: 'ce-link-autocomplete__hidden',
+
+      actionsWrapper: 'ce-link-autocomplete__actions-wrapper',
+      input: 'ce-link-autocomplete__input',
+      loader: 'ce-link-autocomplete__loader',
+      loaderWrapper: 'ce-link-autocomplete__loader-wrapper',
+
+      searchItem: 'ce-link-autocomplete__search-item',
+      searchItemName: 'ce-link-autocomplete__search-item-name',
+      searchItemDescription: 'ce-link-autocomplete__search-item-description',
+
+      linkDataWrapper: 'ce-link-autocomplete__link-data-wrapper',
+      linkDataTitleWrapper: 'ce-link-autocomplete__link-data-title-wrapper',
+      linkDataName: 'ce-link-autocomplete__link-data-name',
+      linkDataDescription: 'ce-link-autocomplete__link-data-description',
+      linkDataURL: 'ce-link-autocomplete__link-data-url',
+
+      isActive: 'ce-inline-tool--active',
     };
   }
 
@@ -45,10 +99,9 @@ export default class MagicCitation {
    * @param api
    */
   constructor({ config, api }) {
-    console.log('constructor()');
-
     this.api = api;
     this.config = config;
+    this.selection = new SelectionUtils();
 
     this.searchEndpointUrl = this.config.endpointUrl;
     this.searchQueryParam = this.config.queryParam;
@@ -57,10 +110,20 @@ export default class MagicCitation {
       toolButtons: null,
       toolButtonLink: null,
       toolButtonUnlink: null,
+
       actionsWrapper: null,
-      searchInput: null,
+      inputWrapper: null,
+      inputField: null,
+      loader: null,
+
+      searchResponseWrapper: null,
       searchResults: null,
-      loader: null
+
+      linkDataWrapper: null,
+      linkDataTitleWrapper: null,
+      linkDataName: null,
+      linkDataDescription: null,
+      linkDataURL: null,
     }
 
     this.tagName = 'A';
@@ -80,31 +143,25 @@ export default class MagicCitation {
      * Create wrapper for buttons
      * @type {HTMLDivElement}
      */
-    this.nodes.toolButtons = document.createElement('div');
-    this.nodes.toolButtons.classList.add(this.CSS.button, this.CSS.toolButtonWrapper);
+    this.nodes.toolButtons = document.createElement('BUTTON');
+    this.nodes.toolButtons.classList.add(this.CSS.button);
 
     /**
      * Create Link button
      * @type {HTMLDivElement}
      */
-    this.nodes.toolButtonLink = document.createElement('div');
-    // this.nodes.toolButtonLink.innerHTML += 'M';
-    this.nodes.toolButtonLink.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 10" width="14" height="10">\n' +
-        '  <path d="M6 0v2H5a3 3 0 000 6h1v2H5A5 5 0 115 0h1zm2 0h1a5 5 0 110 10H8V8h1a3 3 0 000-6H8V0zM5 4h4a1 1 0 110 2H5a1 1 0 110-2z"/>\n' +
-        '</svg>\n';
+    this.nodes.toolButtonLink = Dom.make('SPAN', [ this.CSS.iconWrapper ]);
+    this.nodes.toolButtonLink.innerHTML = require('../icons/link.svg');
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonLink);
 
     /**
      * Create Unlink button
      * @type {HTMLDivElement}
      */
-    this.nodes.toolButtonUnlink = document.createElement('div');
-    // this.nodes.toolButtonUnlink.innerHTML += 'N';
-    this.nodes.toolButtonUnlink.innerHTML += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 11" width="15" height="11">\n' +
-        '  <path d="M13.073 2.099l-1.448 1.448A3 3 0 009 2H8V0h1c1.68 0 3.166.828 4.073 2.099zM6.929 4l-.879.879L7.172 6H5a1 1 0 110-2h1.929zM6 0v2H5a3 3 0 100 6h1v2H5A5 5 0 115 0h1zm6.414 7l2.122 2.121-1.415 1.415L11 8.414l-2.121 2.122L7.464 9.12 9.586 7 7.464 4.879 8.88 3.464 11 5.586l2.121-2.122 1.415 1.415L12.414 7z"/>\n' +
-        '</svg>\n';
+    this.nodes.toolButtonUnlink = Dom.make('SPAN', [ this.CSS.iconWrapper ]);
+    this.nodes.toolButtonUnlink.innerHTML = require('../icons/unlink.svg');
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonUnlink);
-    this.nodes.toolButtonUnlink.classList.add(this.CSS.hidden);
+    this.toggleVisibility(this.nodes.toolButtonUnlink, false);
 
     return this.nodes.toolButtons;
   }
@@ -112,102 +169,175 @@ export default class MagicCitation {
   /**
    * Render actions element
    *
+   * actionsWrapper
+   *   |- inputWrapper
+   *   |    |- inputField
+   *   |    |- loader
+   *   |
+   *   |- searchResponseWrapper
+   *   |    |- searchItemWrapper
+   *   |    |    |- searchItemName
+   *   |    |    |- searchItemDescription
+   *   |    |
+   *   |    |- ...
+   *   |
+   *   |- linkDataWrapper
+   *        |- URL
+   *        |- name
+   *        |- description
+   *
+   *
    * @return {HTMLDivElement}
    */
   renderActions() {
-    console.log('renderActions()');
-
-    this.nodes.actionsWrapper = document.createElement('DIV');
-
-    this.nodes.searchInput = document.createElement('INPUT');
-    this.nodes.searchInput.placeholder = 'Add a link or search resources';
-    this.nodes.searchInput.classList.add(this.CSS.input, this.CSS.inputWrapper);
-
-    this.nodes.searchResults = document.createElement('DIV');
-
+    /**
+     * Define debounce timer
+     */
     let typingTimer;
+
+    /**
+     * Render actions wrapper
+     */
+    this.nodes.actionsWrapper = Dom.make('DIV', [this.CSS.actionsWrapper]);
+
+    /**
+     * Render input field
+     */
+    this.nodes.inputWrapper = Dom.make('DIV');
+    this.nodes.inputField = Dom.make('INPUT', [this.CSS.input], {
+      placeholder: this.api.i18n.t(this.searchEndpointUrl ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink)
+    });
+
+    this.nodes.loader = Dom.make('DIV', [this.CSS.loader, this.CSS.loaderWrapper]);
+    this.toggleVisibility(this.nodes.loader, false);
+
+    this.nodes.inputWrapper.appendChild(this.nodes.inputField);
+    this.nodes.inputWrapper.appendChild(this.nodes.loader);
+    this.toggleVisibility(this.nodes.inputWrapper, false);
+
+    /**
+     * Render search results
+     */
+    this.nodes.searchResults = Dom.make('DIV');
 
     /**
      * Listen to pressed enter key
      */
-    this.nodes.searchInput.addEventListener('keydown', (event) => {
+    this.nodes.inputField.addEventListener('keydown', (event) => {
       if (event.keyCode !== this.ENTER_KEY) {
         return;
       }
 
-      const searchString = event.target.value;
+      const href = event.target.value;
 
-      if (!searchString || !searchString.trim()) {
+      if (!href || !href.trim()) {
         return;
       }
 
-      if (!this.checkForValidUrl(searchString)) {
-        console.error('Link is not a valid');
+      if (!this.checkForValidUrl(href)) {
+        notifier.show({
+          message: DICTIONARY.invalidUrl,
+          style: 'error'
+        })
+
+        this.clearSearchList();
         return;
       }
 
-      /**
-       * Get link element
-       * @type {HTMLElement}
-       */
-      const linkElement = this.wrapTextToLink(searchString);
+      this.selection.restore();
+      this.selection.removeFakeBackground();
+      document.execCommand('createLink', false, href);
+
+      const newLink = this.selection.findParentTag(this.tagName);
 
       /**
-       * Insert link
+       * Preventing events that will be able to happen
        */
-      this.range.insertNode(linkElement);
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      this.selection.collapseToEnd();
       this.api.inlineToolbar.close();
     })
 
     /**
      * Listen to input
      */
-    this.nodes.searchInput.addEventListener('input', (event) => {
-      const searchString = event.target.value;
-
+    this.nodes.inputField.addEventListener('input', (event) => {
+      /**
+       * Stop debounce timer
+       */
       clearTimeout(typingTimer);
 
+      const searchString = event.target.value;
+
+      /**
+       * If search string in empty then clear search list
+       */
       if (!searchString || !searchString.trim()) {
         this.clearSearchList();
         return;
       }
 
+      if (this.checkForValidUrl(searchString)) {
+        this.generateSearchList([{
+          href: searchString
+        }]);
+
+        return;
+      }
+
+      /**
+       * If no server endpoint then do nothing
+       */
+      if (!this.searchEndpointUrl) {
+        return;
+      }
+
+      /**
+       * Define a new timer
+       */
       typingTimer = setTimeout(async () => {
-        const searchData = await this.searchRequest(searchString);
+        /**
+         * Show the loader during request
+         */
+        this.toggleVisibility(this.nodes.loader, true);
+        try {
+          const searchDataItems = await this.searchRequest(searchString);
 
-        this.clearSearchList();
-
-        searchData.forEach(item => {
-          const searchItem = document.createElement('DIV');
-
-          searchItem.classList.add(this.CSS.searchItem);
-          searchItem.innerText = item.name;
-
-          searchItem.addEventListener('click', (event) => {
-            const href = item.href;
-
-            delete item.href;
-
-            /**
-             * Get link element
-             * @type {HTMLElement}
-             */
-            const linkElement = this.wrapTextToLink(searchString, item);
-
-            /**
-             * Insert link
-             */
-            this.range.insertNode(linkElement);
-            this.api.inlineToolbar.close();
-          });
-
-          this.nodes.searchResults.appendChild(searchItem);
-        })
-      }, 800);
+          /**
+           * Generate list
+           */
+          this.generateSearchList(searchDataItems);
+        } catch (e) {
+          notifier.show({
+            message: `${DICTIONARY.searchRequestError} "${e.message}"`,
+            style: 'error'
+          })
+        }
+        this.toggleVisibility(this.nodes.loader, false);
+      }, 700);
     });
 
-    this.nodes.actionsWrapper.appendChild(this.nodes.searchInput);
+    this.nodes.linkDataWrapper = Dom.make('DIV', [ this.CSS.linkDataWrapper ]);
+    this.toggleVisibility(this.nodes.linkDataWrapper, false);
+
+
+    this.nodes.linkDataTitleWrapper = Dom.make('DIV', [ this.CSS.linkDataTitleWrapper]);
+    this.nodes.linkDataWrapper.appendChild(this.nodes.linkDataTitleWrapper);
+    this.toggleVisibility(this.nodes.linkDataTitleWrapper, false);
+
+    this.nodes.linkDataName = Dom.make('DIV', [ this.CSS.linkDataName]);
+    this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataName);
+    this.nodes.linkDataDescription = Dom.make('DIV', [ this.CSS.linkDataDescription]);
+    this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataDescription);
+
+    this.nodes.linkDataURL = Dom.make('A', [ this.CSS.linkDataURL ]);
+    this.nodes.linkDataWrapper.appendChild(this.nodes.linkDataURL);
+
+    this.nodes.actionsWrapper.appendChild(this.nodes.inputWrapper);
     this.nodes.actionsWrapper.appendChild(this.nodes.searchResults);
+    this.nodes.actionsWrapper.appendChild(this.nodes.linkDataWrapper);
 
     return this.nodes.actionsWrapper;
   }
@@ -217,11 +347,10 @@ export default class MagicCitation {
    * @param linkValue
    * @param additionalData
    */
-  wrapTextToLink(linkValue, additionalData) {
-    let linkElement = document.createElement(this.tagName);
-
-    linkElement.appendChild(this.range.extractContents());
-    linkElement.href = linkValue;
+  wrapTextToLinkElement(linkValue, additionalData) {
+    let linkElement = Dom.make(this.tagName, [], {
+      href: linkValue
+    });
 
     Object.keys(additionalData).forEach(key => {
       linkElement.dataset[key] = additionalData[key];
@@ -240,30 +369,109 @@ export default class MagicCitation {
   }
 
   /**
+   *
+   * @param items
+   */
+  generateSearchList(items = []) {
+    /**
+     * Clear list first
+     */
+    this.clearSearchList();
+
+
+    /**
+     * If items data is not an array
+     */
+    if (!Utils.isArray(items)) {
+      notifier.show({
+        message: DICTIONARY.invalidServerData,
+        style: 'error'
+      })
+      return;
+    }
+
+    /**
+     * If no items returned
+     */
+    if (items.length === 0) {
+      return;
+    }
+
+    items.forEach(item => {
+      const searchItem = Dom.make('DIV', [this.CSS.searchItem]);
+
+      const searchItemName = Dom.make('DIV', [ this.CSS.searchItemName ], {
+        innerText: item.name || item.href
+      });
+      searchItem.appendChild(searchItemName);
+
+      if (item.description) {
+        const searchItemDescription = Dom.make('DIV', [ this.CSS.searchItemDescription ], {
+          innerText: item.description
+        });
+        searchItem.appendChild(searchItemDescription);
+      }
+
+      searchItem.addEventListener('click', (event) => {
+        const href = item.href;
+
+        delete item.href;
+
+        this.selection.restore();
+        this.selection.removeFakeBackground();
+        document.execCommand('createLink', false, href);
+
+        const newLink = this.selection.findParentTag(this.tagName);
+
+        Object.keys(item).forEach(key => {
+          newLink.dataset[key] = item[key];
+        })
+
+        /**
+         * Preventing events that will be able to happen
+         */
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        this.selection.collapseToEnd();
+        this.api.inlineToolbar.close();
+      });
+
+      this.nodes.searchResults.appendChild(searchItem);
+    })
+  }
+
+  /**
    * Handle clicks on the Inline Toolbar icon
    *
    * @param {Range} range - range to wrap with link
    */
   surround(range) {
-    console.log('surround()');
-
     if (!range) {
       return;
     }
 
-    this.range = range;
+    /**
+     * Get result state after checkState() function
+     * If tool button icon unlink is active then selected text is a link
+     * @type {boolean}
+     */
+    const isLinkSelected = this.nodes.toolButtonUnlink.classList.contains(this.CSS.isActive);
 
-    this.nodes.searchInput.classList.add(this.CSS.inputShowed);
+    this.selection.setFakeBackground();
+    this.selection.save();
 
-    if (this.nodes.toolButtonUnlink.classList.contains(this.CSS.isActive)) {
-      const anchorElement = range.commonAncestorContainer instanceof Element ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
-      const linkElement = anchorElement.closest(this.tagName);
+    if (!isLinkSelected) {
+      this.toggleVisibility(this.nodes.inputWrapper, true);
+      this.nodes.inputField.focus();
+    } else {
+      const parentAnchor = this.selection.findParentTag('A');
 
-      const spanContent = document.createElement('SPAN');
+      this.selection.expandToTag(parentAnchor);
 
-      spanContent.innerHTML = linkElement.innerHTML;
+      document.execCommand('unlink');
 
-      linkElement.parentNode.replaceChild(spanContent, linkElement);
+      this.selection.removeFakeBackground();
       this.api.inlineToolbar.close();
     }
   }
@@ -280,23 +488,29 @@ export default class MagicCitation {
       return;
     }
 
-    const anchorElement = text instanceof Element ? text : text.parentElement;
-    const closestTagElement = anchorElement.closest(this.tagName);
+    const parentA = this.selection.findParentTag(this.tagName);
 
-    // this.nodes.searchInput.value = anchorElement.innerText;
-    // this.nodes.searchInput.classList.add(this.CSS.inputShowed);
+    if (parentA) {
+      this.nodes.linkDataName.innerText = parentA.dataset.name || '';
 
-    if (!!closestTagElement) {
+      this.nodes.linkDataDescription.innerText = parentA.dataset.description || '';
+
+      this.nodes.linkDataURL.innerText = parentA.href || '';
+      this.nodes.linkDataURL.href = parentA.href || '';
+      this.nodes.linkDataURL.target = '_blank';
+
+
+      if (parentA.dataset.name || parentA.dataset.description) {
+        this.toggleVisibility(this.nodes.linkDataTitleWrapper, true)
+      }
+
+      this.toggleVisibility(this.nodes.linkDataWrapper, true);
+
       /**
-       * Fill input value with link href
+       * Show 'unlink' icon
        */
-      const hrefAttr = anchorElement.getAttribute('href');
-
-      this.nodes.searchInput.value = hrefAttr !== 'null' ? hrefAttr : '';
-      this.nodes.searchInput.classList.add(this.CSS.inputShowed);
-
-      this.nodes.toolButtonLink.classList.add(this.CSS.hidden);
-      this.nodes.toolButtonUnlink.classList.remove(this.CSS.hidden);
+      this.toggleVisibility(this.nodes.toolButtonLink, false);
+      this.toggleVisibility(this.nodes.toolButtonUnlink, true);
       this.nodes.toolButtonUnlink.classList.add(this.CSS.isActive);
     }
   }
@@ -315,7 +529,19 @@ export default class MagicCitation {
   }
 
   /**
-   * Send search request and update rows in table
+   *
+   *
+   * @param {HTMLElement} element
+   * @param {boolean} isVisible
+   *
+   * @return
+   */
+  toggleVisibility(element, isVisible = true) {
+    element.classList[isVisible ? 'remove' : 'add'](this.CSS.hidden);
+  }
+
+  /**
+   * Send search request
    *
    * @param {string} searchString - search string input
    *
@@ -337,23 +563,20 @@ export default class MagicCitation {
   }
 
   /**
-   * Styles
-   *
-   * @private
+   * Function called with Inline Toolbar closing
    */
-  get CSS() {
-    return {
-      toolButtonWrapper: 'ce-magic-citation',
-      inputWrapper: 'ce-magic-citation__input',
-      inputHidden: 'ce-magic-citation__input--hidden',
-      button: 'ce-inline-tool',
-      buttonModifier: 'ce-inline-tool--link',
-      buttonUnlink: 'ce-inline-tool--unlink',
-      input: 'ce-inline-tool-input',
-      inputShowed: 'ce-inline-tool-input--showed',
-      searchItem: 'ce-magic-citation__search-item',
-      isActive: 'ce-inline-tool--active',
-      hidden: 'ce-magic-citation__hidden'
-    };
+  clear() {
+    if (this.selection.isFakeBackgroundEnabled) {
+      // if actions is broken by other selection We need to save new selection
+      const currentSelection = new SelectionUtils();
+
+      currentSelection.save();
+
+      this.selection.restore();
+      this.selection.removeFakeBackground();
+
+      // and recover new selection after removing fake background
+      currentSelection.restore();
+    }
   }
 }

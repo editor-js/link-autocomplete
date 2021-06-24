@@ -58,7 +58,9 @@
   <script src="../dist/bundle.js"></script>
 
   <!-- Load Editor.js's Core -->
-  <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.19"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@editorjs/nested-list@latest"></script>
 
   <!-- Initialization -->
   <script>
@@ -82,18 +84,19 @@
        * - if true (or not specified), the order from 'tool' property will be used
        * - if an array of tool names, this order will be used
        */
-      // inlineToolbar: ['link', 'marker', 'bold', 'italic'],
-      inlineToolbar: ['bold', 'italic', 'MagicCitation'],
-      // inlineToolbar: true,
+      inlineToolbar: ['bold', 'italic', 'LinkAutocomplete'],
 
       /**
        * Tools list
        */
       tools: {
-        MagicCitation: {
-          class: MagicCitation,
+        Header,
+        NestedList,
+
+        LinkAutocomplete: {
+          class: LinkAutocomplete,
           config: {
-            endpointUrl: 'http://localhost:3000/',
+            // endpointUrl: 'http://localhost:3000/',
             queryParam: 'search'
           }
         }
@@ -112,7 +115,7 @@
           {
             type : 'paragraph',
             data : {
-              text : 'Hey. Meet the new Editor. On this page you can see it in action — try to <a href="https://codex.so" data-name="CodeX site">edit this text</a>. Source code of the page contains the example of connection and configuration.'
+              text : 'Hey. Meet the new <a href="https://ya.ru">Editor</a>. On this page you can see it in action — try to <a href="https://codex.so" data-name="CodeX site" data-description="Team of web-enthusiasts">edit this text</a>. Source code of the page contains the example of connection and configuration.'
             }
           }
         ]

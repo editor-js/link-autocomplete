@@ -22,6 +22,17 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.svg$/i,
+        use: [
+          {
+            loader: 'raw-loader',
+            options: {
+              esModule: false,
+            },
+          },
+        ],
+      },
     ],
   },
   resolve: {
@@ -30,7 +41,7 @@ module.exports = {
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
-    library: 'MagicCitation',
+    library: 'LinkAutocomplete',
     libraryTarget: 'umd',
     libraryExport: 'default',
   },

@@ -19,22 +19,30 @@ app.get('/', (req, res) => {
         {
             href: `https://codex.so/` + `${searchString} first search item`.replace(/([^a-zA-Z0-9])/g, '-'),
             name: `${searchString} first search item`,
+            description: 'Desc for the first item',
             resourceId: '873acc61-73de-40cb-b430-e20da97a6b2e'
         },
         {
             href: `https://codex.so/` + `${searchString} another one search item`.replace(/([^a-zA-Z0-9])/g, '-'),
             name: `${searchString} another one search item`,
+            description: 'Desc for the second item',
             resourceId: '873acc61-73de-40cb-b430-e20da97a6b2e'
         },
         {
             href: `https://codex.so/` + `${searchString} third item`.replace(/([^a-zA-Z0-9])/g, '-'),
             name: `${searchString} third item`,
+            description: 'Desc for the third item',
             resourceId: '873acc61-73de-40cb-b430-e20da97a6b2e'
         }
     ];
 
     res.setHeader('Content-Type', 'application/json');
-    res.send(response);
+    // res.send(response);
+
+    res.send({ss: 'asdasd'});
+
+    // res.status(404);
+    // res.text('sorry');
 });
 
 app.listen(port, () => {
