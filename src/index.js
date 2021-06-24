@@ -234,7 +234,7 @@ export default class LinkAutocomplete {
         return;
       }
 
-      if (!this.checkForValidUrl(href)) {
+      if (!checkForValidUrl(href)) {
         notifier.show({
           message: DICTIONARY.invalidUrl,
           style: 'error'
@@ -279,7 +279,7 @@ export default class LinkAutocomplete {
         return;
       }
 
-      if (this.checkForValidUrl(searchString)) {
+      if (checkForValidUrl(searchString)) {
         this.generateSearchList([{
           href: searchString
         }]);
@@ -513,19 +513,6 @@ export default class LinkAutocomplete {
       this.toggleVisibility(this.nodes.toolButtonUnlink, true);
       this.nodes.toolButtonUnlink.classList.add(this.CSS.isActive);
     }
-  }
-
-  /**
-   * Is string a valid url
-   *
-   * @param {string} textString
-   *
-   * @return {boolean}
-   */
-  checkForValidUrl(textString) {
-    const regex = new RegExp(/(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/);
-
-    return regex.test(textString);
   }
 
   /**
