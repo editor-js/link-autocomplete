@@ -37,12 +37,7 @@ app.get('/', (req, res) => {
     ];
 
     res.setHeader('Content-Type', 'application/json');
-    // res.send(response);
-
-    res.send({ss: 'asdasd'});
-
-    // res.status(404);
-    // res.text('sorry');
+    res.send(response);
 });
 
 app.listen(port, () => {

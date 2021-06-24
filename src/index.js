@@ -205,7 +205,7 @@ export default class LinkAutocomplete {
      */
     this.nodes.inputWrapper = Dom.make('DIV');
     this.nodes.inputField = Dom.make('INPUT', [this.CSS.input], {
-      placeholder: this.api.i18n.t(this.searchEndpointUrl ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink)
+      placeholder: this.api.i18n.t(this.isServerEnabled ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink)
     });
 
     this.nodes.loader = Dom.make('DIV', [this.CSS.loader, this.CSS.loaderWrapper]);
@@ -290,7 +290,7 @@ export default class LinkAutocomplete {
       /**
        * If no server endpoint then do nothing
        */
-      if (!this.searchEndpointUrl) {
+      if (!this.isServerEnabled) {
         return;
       }
 
@@ -529,7 +529,7 @@ export default class LinkAutocomplete {
   }
 
   /**
-   *
+   * Show or hide target element
    *
    * @param {HTMLElement} element
    * @param {boolean} isVisible
@@ -560,6 +560,15 @@ export default class LinkAutocomplete {
     })).data;
 
     return searchData;
+  }
+
+  /**
+   * Do we need to send requests to the server
+   *
+   * @return {boolean}
+   */
+  isServerEnabled() {
+    return !!this.searchEndpointUrl;
   }
 
   /**
