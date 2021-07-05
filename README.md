@@ -1,7 +1,6 @@
 <!--
 
 TODO
-- add arrows and enter integration
 - simplify event listening 
 - refactor the code
 

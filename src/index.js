@@ -81,6 +81,7 @@ export default class LinkAutocomplete {
       loaderWrapper: 'ce-link-autocomplete__loader-wrapper',
 
       searchItem: 'ce-link-autocomplete__search-item',
+      searchItemSelected: 'ce-link-autocomplete__search-item--selected',
       searchItemName: 'ce-link-autocomplete__search-item-name',
       searchItemDescription: 'ce-link-autocomplete__search-item-description',
 
@@ -116,7 +117,6 @@ export default class LinkAutocomplete {
       inputField: null,
       loader: null,
 
-      searchResponseWrapper: null,
       searchResults: null,
 
       linkDataWrapper: null,
@@ -129,9 +129,13 @@ export default class LinkAutocomplete {
     this.tagName = 'A';
 
     /**
-     * Enter key code
+     * Key codes
      */
-    this.ENTER_KEY = 13;
+    this.KEYS = {
+      ENTER: 13,
+      UP: 38,
+      DOWN: 40
+    }
   }
 
   /**
@@ -174,7 +178,7 @@ export default class LinkAutocomplete {
    *   |    |- inputField
    *   |    |- loader
    *   |
-   *   |- searchResponseWrapper
+   *   |- searchResults
    *   |    |- searchItemWrapper
    *   |    |    |- searchItemName
    *   |    |    |- searchItemDescription
@@ -220,11 +224,44 @@ export default class LinkAutocomplete {
      */
     this.nodes.searchResults = Dom.make('DIV');
 
+    this.nodes.searchResults.addEventListener('mouseenter', () => {
+      const searchItems = Array.from(this.nodes.searchResults.querySelectorAll(`.${this.CSS.searchItem}`));
+
+      searchItems.forEach(item => {
+        item.classList.remove(this.CSS.searchItemSelected);
+      })
+    })
+
     /**
-     * Listen to pressed enter key
+     * Listen to pressed enter key or up and down arrows
      */
     this.nodes.inputField.addEventListener('keydown', (event) => {
-      if (event.keyCode !== this.ENTER_KEY) {
+      if ([this.KEYS.UP, this.KEYS.DOWN].includes(event.keyCode)) {
+        this.selectItemByKeys(event);
+        return;
+      }
+
+      if (event.keyCode !== this.KEYS.ENTER) {
+        return;
+      }
+
+      /**
+       * Preventing events that will be able to happen
+       */
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      const selectedItem = this.getSelectedItem();
+
+      if (selectedItem) {
+        this.selection.restore();
+        this.selection.removeFakeBackground();
+
+        this.searchItemPressed(selectedItem);
+
+        this.selection.collapseToEnd();
+        this.api.inlineToolbar.close();
         return;
       }
 
@@ -240,22 +277,16 @@ export default class LinkAutocomplete {
           style: 'error'
         })
 
-        this.clearSearchList();
         return;
       }
 
       this.selection.restore();
       this.selection.removeFakeBackground();
+
       document.execCommand('createLink', false, href);
 
       const newLink = this.selection.findParentTag(this.tagName);
 
-      /**
-       * Preventing events that will be able to happen
-       */
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
       this.selection.collapseToEnd();
       this.api.inlineToolbar.close();
     })
@@ -342,6 +373,43 @@ export default class LinkAutocomplete {
     return this.nodes.actionsWrapper;
   }
 
+  selectItemByKeys(event) {
+    /**
+     * Preventing events that will be able to happen
+     */
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    const indexDelta = event.keyCode === this.KEYS.DOWN ? 1 : -1;
+
+    const searchItems = Array.from(this.nodes.searchResults.querySelectorAll(`.${this.CSS.searchItem}`));
+    const selectedItem = this.getSelectedItem();
+
+    const indexOfSelectedItem = searchItems.indexOf(selectedItem);
+
+    if (indexOfSelectedItem !== -1) {
+      const nextIndex = (indexOfSelectedItem + indexDelta + searchItems.length) % searchItems.length;
+
+      searchItems[indexOfSelectedItem].classList.remove(this.CSS.searchItemSelected);
+      searchItems[nextIndex].classList.add(this.CSS.searchItemSelected);
+    } else {
+      if (!searchItems[0]) {
+        return;
+      }
+
+      const nextIndex = indexDelta === 1 ? 0 : searchItems.length - 1;
+
+      searchItems[nextIndex].classList.add(this.CSS.searchItemSelected);
+    }
+  }
+
+  getSelectedItem() {
+    const selectedItem = this.nodes.searchResults.querySelector(`.${this.CSS.searchItemSelected}`);
+
+    return selectedItem;
+  }
+
   /**
    *
    * @param linkValue
@@ -412,20 +480,26 @@ export default class LinkAutocomplete {
         searchItem.appendChild(searchItemDescription);
       }
 
+      Object.keys(item).forEach(key => {
+        searchItem.dataset[key] = item[key];
+      })
+
       searchItem.addEventListener('click', (event) => {
-        const href = item.href;
 
-        delete item.href;
+        // const href = item.href;
+        //
+        // delete item.href;
+        //
 
-        this.selection.restore();
-        this.selection.removeFakeBackground();
-        document.execCommand('createLink', false, href);
+        this.searchItemPressed(searchItem);
 
-        const newLink = this.selection.findParentTag(this.tagName);
-
-        Object.keys(item).forEach(key => {
-          newLink.dataset[key] = item[key];
-        })
+        // document.execCommand('createLink', false, href);
+        //
+        // const newLink = this.selection.findParentTag(this.tagName);
+        //
+        // Object.keys(item).forEach(key => {
+        //   newLink.dataset[key] = item[key];
+        // })
 
         /**
          * Preventing events that will be able to happen
@@ -433,6 +507,7 @@ export default class LinkAutocomplete {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
+
         this.selection.collapseToEnd();
         this.api.inlineToolbar.close();
       });
@@ -440,6 +515,22 @@ export default class LinkAutocomplete {
       this.nodes.searchResults.appendChild(searchItem);
     })
   }
+
+  searchItemPressed(element) {
+    if (!element.dataset || !element.dataset['href']) {
+      return;
+    }
+
+    const href = element.dataset['href'];
+
+    document.execCommand('createLink', false, href);
+
+    const newLink = this.selection.findParentTag(this.tagName);
+
+    Object.keys(element.dataset).forEach(key => {
+      newLink.dataset[key] = element.dataset[key];
+    })
+  };
 
   /**
    * Handle clicks on the Inline Toolbar icon
