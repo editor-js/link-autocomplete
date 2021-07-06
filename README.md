@@ -107,6 +107,10 @@ Marked text will be wrapped with a `a` tag as a usual link.
 }
 ```
 
+## Shortcut
+
+By default shortcut `CMD (CTRL) + K` is used for pasting links as usual.
+
 ## I18n
 
 There is a few phrases to be translated. 

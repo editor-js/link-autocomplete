@@ -64,6 +64,15 @@ export default class LinkAutocomplete {
   }
 
   /**
+   * Set a shortcut
+   *
+   * @return {string}
+   */
+  get shortcut() {
+    return 'CMD+K';
+  }
+
+  /**
    * Styles
    *
    * @private
