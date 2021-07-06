@@ -6,7 +6,6 @@ import './../styles/index.pcss';
 /**
  * Import deps
  */
-import axios from 'axios';
 import notifier from 'codex-notifier';
 
 /**
@@ -656,15 +655,19 @@ export default class LinkAutocomplete {
    */
   async searchRequest(searchString) {
     /**
-     * Get a response table data
-     *
-     * @type {AxiosResponse<*>}
+     * Compose query string
+     * @type {string}
      */
-    const searchData = (await axios.get(this.searchEndpointUrl, {
-      params: {
-        [this.searchQueryParam]: searchString
-      }
-    })).data;
+    const queryString = new URLSearchParams({
+      [this.searchQueryParam]: searchString}
+    ).toString()
+
+    /**
+     * Get search data
+     *
+     * @type {Promise<any>}
+     */
+    const searchData = (await fetch(`${this.searchEndpointUrl}?${queryString}`)).json();
 
     return searchData;
   }

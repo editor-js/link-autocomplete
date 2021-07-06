@@ -12,7 +12,6 @@
     "server": "nodemon example/server.js"
   },
   "devDependencies": {
-    "axios": "^0.21.1",
     "codex-notifier": "^1.1.2",
     "css-loader": "^5.0.2",
     "express": "^4.17.1",

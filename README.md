@@ -2,7 +2,6 @@
 
 TODO
 - check UX for slow internet connection
-- use fetch(). not axios 
 
 - simplify event listening 
 - refactor the code
@@ -63,7 +62,9 @@ var editor = EditorJS({
 
 ## Config Params
 
-There is a one param which may be configured.
+Search requests will be sent to the server by `GET` requests with a search string as a query param. 
+
+List of server connection params which may be configured.
 
 `endpointUrl` — url to the server's endpoint for getting suggestions as links.
 
