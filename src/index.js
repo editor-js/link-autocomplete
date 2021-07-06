@@ -255,13 +255,7 @@ export default class LinkAutocomplete {
       const selectedItem = this.getSelectedItem();
 
       if (selectedItem) {
-        this.selection.restore();
-        this.selection.removeFakeBackground();
-
         this.searchItemPressed(selectedItem);
-
-        this.selection.collapseToEnd();
-        this.api.inlineToolbar.close();
         return;
       }
 
@@ -373,6 +367,10 @@ export default class LinkAutocomplete {
     return this.nodes.actionsWrapper;
   }
 
+  /**
+   *
+   * @param {KeyboardEvent} event
+   */
   selectItemByKeys(event) {
     /**
      * Preventing events that will be able to happen
@@ -404,10 +402,13 @@ export default class LinkAutocomplete {
     }
   }
 
+  /**
+   * Find selected item
+   *
+   * @return {Element|null}
+   */
   getSelectedItem() {
-    const selectedItem = this.nodes.searchResults.querySelector(`.${this.CSS.searchItemSelected}`);
-
-    return selectedItem;
+    return this.nodes.searchResults.querySelector(`.${this.CSS.searchItemSelected}`);
   }
 
   /**
@@ -445,7 +446,6 @@ export default class LinkAutocomplete {
      * Clear list first
      */
     this.clearSearchList();
-
 
     /**
      * If items data is not an array
@@ -485,6 +485,12 @@ export default class LinkAutocomplete {
       })
 
       searchItem.addEventListener('click', (event) => {
+        /**
+         * Preventing events that will be able to happen
+         */
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
 
         // const href = item.href;
         //
@@ -501,15 +507,9 @@ export default class LinkAutocomplete {
         //   newLink.dataset[key] = item[key];
         // })
 
-        /**
-         * Preventing events that will be able to happen
-         */
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        this.selection.collapseToEnd();
-        this.api.inlineToolbar.close();
+        //
+        // this.selection.collapseToEnd();
+        // this.api.inlineToolbar.close();
       });
 
       this.nodes.searchResults.appendChild(searchItem);
@@ -523,6 +523,9 @@ export default class LinkAutocomplete {
 
     const href = element.dataset['href'];
 
+    this.selection.restore();
+    this.selection.removeFakeBackground();
+
     document.execCommand('createLink', false, href);
 
     const newLink = this.selection.findParentTag(this.tagName);
@@ -530,6 +533,9 @@ export default class LinkAutocomplete {
     Object.keys(element.dataset).forEach(key => {
       newLink.dataset[key] = element.dataset[key];
     })
+
+    this.selection.collapseToEnd();
+    this.api.inlineToolbar.close();
   };
 
   /**
