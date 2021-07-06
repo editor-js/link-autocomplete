@@ -73,9 +73,8 @@ export default class LinkAutocomplete {
   }
 
   /**
-   * Styles
-   *
    * @private
+   * Define style class names
    */
   get CSS() {
     return {
@@ -106,16 +105,45 @@ export default class LinkAutocomplete {
 
   /**
    * Initialize basic data
-   * @param api
    */
   constructor({ config, api }) {
+    /**
+     * Essential tools
+     */
     this.api = api;
     this.config = config;
     this.selection = new SelectionUtils();
 
+    /**
+     * Config params
+     */
     this.searchEndpointUrl = this.config.endpointUrl;
     this.searchQueryParam = this.config.queryParam;
 
+    /**
+     * Tool's nodes list
+     *
+     * toolButtons
+     *   |- toolButtonLink
+     *   |- toolButtonUnlink
+     *
+     * actionsWrapper
+     *   |- inputWrapper
+     *   |    |- inputField
+     *   |    |- loader
+     *   |
+     *   |- searchResults
+     *   |    |- searchItemWrapper
+     *   |    |    |- searchItemName
+     *   |    |    |- searchItemDescription
+     *   |    |
+     *   |    |- ...
+     *   |
+     *   |- linkDataWrapper
+     *        |- URL
+     *        |- name
+     *        |- description
+     */
     this.nodes = {
       toolButtons: null,
       toolButtonLink: null,
@@ -135,6 +163,9 @@ export default class LinkAutocomplete {
       linkDataURL: null,
     }
 
+    /**
+     * Defined consts
+     */
     this.tagName = 'A';
 
     /**
@@ -149,6 +180,7 @@ export default class LinkAutocomplete {
 
   /**
    * Create element with buttons for toolbar
+   *
    * @return {HTMLDivElement}
    */
   render() {
@@ -181,24 +213,6 @@ export default class LinkAutocomplete {
 
   /**
    * Render actions element
-   *
-   * actionsWrapper
-   *   |- inputWrapper
-   *   |    |- inputField
-   *   |    |- loader
-   *   |
-   *   |- searchResults
-   *   |    |- searchItemWrapper
-   *   |    |    |- searchItemName
-   *   |    |    |- searchItemDescription
-   *   |    |
-   *   |    |- ...
-   *   |
-   *   |- linkDataWrapper
-   *        |- URL
-   *        |- name
-   *        |- description
-   *
    *
    * @return {HTMLDivElement}
    */

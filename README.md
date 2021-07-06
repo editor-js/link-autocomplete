@@ -1,6 +1,9 @@
 <!--
 
 TODO
+- check UX for slow internet connection
+- use fetch(). not axios 
+
 - simplify event listening 
 - refactor the code
 
