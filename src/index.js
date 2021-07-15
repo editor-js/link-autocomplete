@@ -11,15 +11,16 @@ import notifier from 'codex-notifier';
 /**
  * Import functions
  */
-import { checkForValidUrl } from './check-for-valid-url';
+import { url } from './utils/url';
 import { Dom } from './utils/dom';
 import { SelectionUtils } from './utils/selection';
-import {Utils} from "./utils/utils";
+import { Utils } from './utils/utils';
 
 /**
- * @typedef {Object} SearchItemData
- * @property {string} name
- * @property {string} href
+ * @typedef {object} SearchItemData
+ * @property {string} href - link target
+ * @property {string} name - link name
+ * @property {string} description - link description
  */
 
 const DICTIONARY = {
@@ -27,11 +28,12 @@ const DICTIONARY = {
   pasteALink: 'Paste a link',
   searchRequestError: 'Cannot process search request because of',
   invalidServerData: 'Server responded with invalid data',
-  invalidUrl: 'Link URL is invalid'
-}
+  invalidUrl: 'Link URL is invalid',
+};
 
 /**
  * Timeout before research in ms after keypressed
+ *
  * @type {number}
  */
 const DEBOUNCE_TIMEOUT = 700;
@@ -63,6 +65,8 @@ export default class LinkAutocomplete {
 
   /**
    * Title for hover-tooltip
+   *
+   * @returns {string}
    */
   static get title() {
     return 'Link Autocomplete';
@@ -71,7 +75,7 @@ export default class LinkAutocomplete {
   /**
    * Set a shortcut
    *
-   * @return {string}
+   * @returns {string}
    */
   get shortcut() {
     return 'CMD+K';
@@ -79,7 +83,8 @@ export default class LinkAutocomplete {
 
   /**
    * @private
-   * Define style class names
+   *
+   * @returns {object<string, string>} — keys and class names
    */
   get CSS() {
     return {
@@ -110,6 +115,9 @@ export default class LinkAutocomplete {
 
   /**
    * Initialize basic data
+   *
+   * @param {object} config — initial config for the tool
+   * @param {object} api — methods from Core
    */
   constructor({ config, api }) {
     /**
@@ -122,7 +130,7 @@ export default class LinkAutocomplete {
     /**
      * Config params
      */
-    this.searchEndpointUrl = this.config.endpointUrl;
+    this.searchEndpointUrl = this.config.endpoint;
     this.searchQueryParam = this.config.queryParam;
 
     /**
@@ -166,10 +174,10 @@ export default class LinkAutocomplete {
       linkDataName: null,
       linkDataDescription: null,
       linkDataURL: null,
-    }
+    };
 
     /**
-     * Defined consts
+     * Define tag name for a link element
      */
     this.tagName = 'A';
 
@@ -179,18 +187,24 @@ export default class LinkAutocomplete {
     this.KEYS = {
       ENTER: 13,
       UP: 38,
-      DOWN: 40
-    }
+      DOWN: 40,
+    };
+
+    /**
+     * Define debounce timer
+     */
+    this.typingTimer = null;
   }
 
   /**
    * Create element with buttons for toolbar
    *
-   * @return {HTMLDivElement}
+   * @returns {HTMLDivElement}
    */
   render() {
     /**
      * Create wrapper for buttons
+     *
      * @type {HTMLDivElement}
      */
     this.nodes.toolButtons = document.createElement('BUTTON');
@@ -198,6 +212,7 @@ export default class LinkAutocomplete {
 
     /**
      * Create Link button
+     *
      * @type {HTMLDivElement}
      */
     this.nodes.toolButtonLink = Dom.make('SPAN', [ this.CSS.iconWrapper ]);
@@ -206,6 +221,7 @@ export default class LinkAutocomplete {
 
     /**
      * Create Unlink button
+     *
      * @type {HTMLDivElement}
      */
     this.nodes.toolButtonUnlink = Dom.make('SPAN', [ this.CSS.iconWrapper ]);
@@ -219,25 +235,20 @@ export default class LinkAutocomplete {
   /**
    * Render actions element
    *
-   * @return {HTMLDivElement}
+   * @returns {HTMLDivElement}
    */
   renderActions() {
     /**
-     * Define debounce timer
-     */
-    let typingTimer;
-
-    /**
      * Render actions wrapper
      */
-    this.nodes.actionsWrapper = Dom.make('DIV', [this.CSS.actionsWrapper]);
+    this.nodes.actionsWrapper = Dom.make('DIV', [ this.CSS.actionsWrapper ]);
 
     /**
      * Render input field
      */
     this.nodes.inputWrapper = Dom.make('DIV');
-    this.nodes.inputField = Dom.make('INPUT', [this.CSS.input], {
-      placeholder: this.api.i18n.t(this.isServerEnabled ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink)
+    this.nodes.inputField = Dom.make('INPUT', [ this.CSS.input ], {
+      placeholder: this.api.i18n.t(this.isServerEnabled ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink),
     });
 
     /**
@@ -262,8 +273,8 @@ export default class LinkAutocomplete {
 
       searchItems.forEach(item => {
         item.classList.remove(this.CSS.searchItemSelected);
-      })
-    })
+      });
+    });
 
     /**
      * Listen to pressed enter key or up and down arrows
@@ -304,86 +315,28 @@ export default class LinkAutocomplete {
           this.processEnterKeypressed();
           break;
       }
-    })
+    });
 
     /**
      * Listen to input
      */
-    this.nodes.inputField.addEventListener('input', (event) => {
-      /**
-       * Stop debounce timer
-       */
-      clearTimeout(typingTimer);
-
-      /**
-       * Get input value
-       */
-      const searchString = event.target.value;
-
-      /**
-       * If search string in empty then clear search list
-       */
-      if (!searchString || !searchString.trim()) {
-        this.clearSearchList();
-        return;
-      }
-
-      /**
-       * If a valid link was entered then show a single one list item
-       */
-      if (checkForValidUrl(searchString)) {
-        this.generateSearchList([{
-          href: searchString
-        }]);
-        return;
-      }
-
-      /**
-       * If no server endpoint then do nothing
-       */
-      if (!this.isServerEnabled) {
-        return;
-      }
-
-      /**
-       * Define a new timer
-       */
-      typingTimer = setTimeout(async () => {
-        /**
-         * Show the loader during request
-         */
-        this.toggleVisibility(this.nodes.loader, true);
-        try {
-          const searchDataItems = await this.searchRequest(searchString);
-
-          /**
-           * Generate list
-           */
-          this.generateSearchList(searchDataItems);
-        } catch (e) {
-          notifier.show({
-            message: `${DICTIONARY.searchRequestError} "${e.message}"`,
-            style: 'error'
-          })
-        }
-        this.toggleVisibility(this.nodes.loader, false);
-      }, DEBOUNCE_TIMEOUT);
-    });
+    this.nodes.inputField.addEventListener('input', this.inputFieldListening.bind(this));
 
     /**
      * Render link data block
+     *
      * @type {HTMLElement}
      */
     this.nodes.linkDataWrapper = Dom.make('DIV', [ this.CSS.linkDataWrapper ]);
     this.toggleVisibility(this.nodes.linkDataWrapper, false);
 
-    this.nodes.linkDataTitleWrapper = Dom.make('DIV', [ this.CSS.linkDataTitleWrapper]);
+    this.nodes.linkDataTitleWrapper = Dom.make('DIV', [ this.CSS.linkDataTitleWrapper ]);
     this.nodes.linkDataWrapper.appendChild(this.nodes.linkDataTitleWrapper);
     this.toggleVisibility(this.nodes.linkDataTitleWrapper, false);
 
-    this.nodes.linkDataName = Dom.make('DIV', [ this.CSS.linkDataName]);
+    this.nodes.linkDataName = Dom.make('DIV', [ this.CSS.linkDataName ]);
     this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataName);
-    this.nodes.linkDataDescription = Dom.make('DIV', [ this.CSS.linkDataDescription]);
+    this.nodes.linkDataDescription = Dom.make('DIV', [ this.CSS.linkDataDescription ]);
     this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataDescription);
 
     this.nodes.linkDataURL = Dom.make('A', [ this.CSS.linkDataURL ]);
@@ -397,6 +350,74 @@ export default class LinkAutocomplete {
     this.nodes.actionsWrapper.appendChild(this.nodes.linkDataWrapper);
 
     return this.nodes.actionsWrapper;
+  }
+
+  /**
+   * Input event listener for a input field
+   *
+   * @param {KeyboardEvent} event
+   */
+  inputFieldListening(event) {
+    /**
+     * Stop debounce timer
+     */
+    clearTimeout(this.typingTimer);
+
+    /**
+     * Get input value
+     */
+    const searchString = event.target.value;
+
+    /**
+     * If search string in empty then clear search list
+     */
+    if (!searchString || !searchString.trim()) {
+      this.clearSearchList();
+
+      return;
+    }
+
+    /**
+     * If a valid link was entered then show only one list item with a link href.
+     */
+    if (url(searchString)) {
+      this.generateSearchList([ {
+        href: searchString,
+      } ]);
+
+      return;
+    }
+
+    /**
+     * If no server endpoint then do nothing
+     */
+    if (!this.isServerEnabled) {
+      return;
+    }
+
+    /**
+     * Define a new timer
+     */
+    this.typingTimer = setTimeout(async () => {
+      /**
+       * Show the loader during request
+       */
+      this.toggleVisibility(this.nodes.loader, true);
+      try {
+        const searchDataItems = await this.searchRequest(searchString);
+
+        /**
+         * Generate list
+         */
+        this.generateSearchList(searchDataItems);
+      } catch (e) {
+        notifier.show({
+          message: `${DICTIONARY.searchRequestError} "${e.message}"`,
+          style: 'error',
+        });
+      }
+      this.toggleVisibility(this.nodes.loader, false);
+    }, DEBOUNCE_TIMEOUT);
   }
 
   /**
@@ -431,6 +452,7 @@ export default class LinkAutocomplete {
     if (indexOfSelectedItem !== -1) {
       /**
        * Magic math for getting correct index of item
+       *
        * @type {number}
        */
       const nextIndex = (indexOfSelectedItem + indexDelta + searchItems.length) % searchItems.length;
@@ -458,6 +480,7 @@ export default class LinkAutocomplete {
 
       /**
        * Detect index for the next selected item depending the arrow key direction
+       *
        * @type {number}
        */
       const nextIndex = indexDelta === 1 ? 0 : searchItems.length - 1;
@@ -471,11 +494,13 @@ export default class LinkAutocomplete {
 
   /**
    * Process enter key pressing
-   * @return
+   *
+   * @returns
    */
   processEnterKeypressed() {
     /**
      * Try to get selected item
+     *
      * @type {Element|null}
      */
     const selectedItem = this.getSelectedItem();
@@ -485,6 +510,7 @@ export default class LinkAutocomplete {
      */
     if (selectedItem) {
       this.searchItemPressed(selectedItem);
+
       return;
     }
 
@@ -503,11 +529,12 @@ export default class LinkAutocomplete {
     /**
      * If input is not a valid url then show an error
      */
-    if (!checkForValidUrl(href)) {
+    if (!url(href)) {
       notifier.show({
         message: DICTIONARY.invalidUrl,
-        style: 'error'
-      })
+        style: 'error',
+      });
+
       return;
     }
 
@@ -528,7 +555,7 @@ export default class LinkAutocomplete {
   /**
    * Get search items
    *
-   * @return {Element[]}
+   * @returns {Element[]}
    */
   getSearchItems() {
     const nodesList = this.nodes.searchResults.querySelectorAll(`.${this.CSS.searchItem}`);
@@ -539,7 +566,7 @@ export default class LinkAutocomplete {
   /**
    * Find selected item
    *
-   * @return {Element|null}
+   * @returns {Element|null}
    */
   getSelectedItem() {
     return this.nodes.searchResults.querySelector(`.${this.CSS.searchItemSelected}`);
@@ -550,13 +577,14 @@ export default class LinkAutocomplete {
    */
   clearSearchList() {
     while (this.nodes.searchResults.firstChild) {
-      this.nodes.searchResults.firstChild.remove()
+      this.nodes.searchResults.firstChild.remove();
     }
   }
 
   /**
    * Fill up a search list results by data
-   * @param {Object[]} items
+   *
+   * @param {SearchItemData[]} items
    */
   generateSearchList(items = []) {
     /**
@@ -570,8 +598,9 @@ export default class LinkAutocomplete {
     if (!Utils.isArray(items)) {
       notifier.show({
         message: DICTIONARY.invalidServerData,
-        style: 'error'
-      })
+        style: 'error',
+      });
+
       return;
     }
 
@@ -586,15 +615,17 @@ export default class LinkAutocomplete {
      * Fill up search list by new elements
      */
     items.forEach(item => {
-      const searchItem = Dom.make('DIV', [this.CSS.searchItem]);
+      const searchItem = Dom.make('DIV', [ this.CSS.searchItem ]);
 
       /**
        * Create a name for a link
+       *
        * @type {HTMLElement}
        */
       const searchItemName = Dom.make('DIV', [ this.CSS.searchItemName ], {
-        innerText: item.name || item.href
+        innerText: item.name || item.href,
       });
+
       searchItem.appendChild(searchItemName);
 
       /**
@@ -602,8 +633,9 @@ export default class LinkAutocomplete {
        */
       if (item.description) {
         const searchItemDescription = Dom.make('DIV', [ this.CSS.searchItemDescription ], {
-          innerText: item.description
+          innerText: item.description,
         });
+
         searchItem.appendChild(searchItemDescription);
       }
 
@@ -612,7 +644,7 @@ export default class LinkAutocomplete {
        */
       Object.keys(item).forEach(key => {
         searchItem.dataset[key] = item[key];
-      })
+      });
 
       /**
        * Enable click listener
@@ -629,11 +661,12 @@ export default class LinkAutocomplete {
       });
 
       this.nodes.searchResults.appendChild(searchItem);
-    })
+    });
   }
 
   /**
    * Process 'press' event on the search item
+   *
    * @param {Element} element
    */
   searchItemPressed(element) {
@@ -646,6 +679,7 @@ export default class LinkAutocomplete {
 
     /**
      * Get link's href
+     *
      * @type {string}
      */
     const href = element.dataset['href'];
@@ -663,6 +697,7 @@ export default class LinkAutocomplete {
 
     /**
      * Get this link element
+     *
      * @type {HTMLElement}
      */
     const newLink = this.selection.findParentTag(this.tagName);
@@ -671,8 +706,12 @@ export default class LinkAutocomplete {
      * Fill up link element's dataset
      */
     Object.keys(element.dataset).forEach(key => {
+      if (key === 'href') {
+        return;
+      }
+
       newLink.dataset[key] = element.dataset[key];
-    })
+    });
 
     /**
      * Collapse selection and close toolbar
@@ -684,7 +723,7 @@ export default class LinkAutocomplete {
   /**
    * Handle clicks on the Inline Toolbar icon
    *
-   * @param {Range} range - range to wrap with link
+   * @param {Range} range — range to wrap with link
    */
   surround(range) {
     if (!range) {
@@ -694,6 +733,7 @@ export default class LinkAutocomplete {
     /**
      * Get result state after checkState() function
      * If tool button icon unlink is active then selected text is a link
+     *
      * @type {boolean}
      */
     const isLinkSelected = this.nodes.toolButtonUnlink.classList.contains(this.CSS.isActive);
@@ -740,7 +780,7 @@ export default class LinkAutocomplete {
   /**
    * Check for a tool's state
    *
-   * @param {Selection} selection
+   * @param {Selection} selection — selection to be passed from Core
    */
   checkState(selection) {
     const text = selection.anchorNode;
@@ -777,7 +817,7 @@ export default class LinkAutocomplete {
      * If link has name or description then show title wrapper
      */
     if (parentA.dataset.name || parentA.dataset.description) {
-      this.toggleVisibility(this.nodes.linkDataTitleWrapper, true)
+      this.toggleVisibility(this.nodes.linkDataTitleWrapper, true);
     }
 
     /**
@@ -796,10 +836,8 @@ export default class LinkAutocomplete {
   /**
    * Show or hide target element
    *
-   * @param {HTMLElement} element
-   * @param {boolean} isVisible
-   *
-   * @return
+   * @param {HTMLElement} element — target element
+   * @param {boolean} isVisible — visibility state
    */
   toggleVisibility(element, isVisible = true) {
     element.classList[isVisible ? 'remove' : 'add'](this.CSS.hidden);
@@ -815,11 +853,11 @@ export default class LinkAutocomplete {
   async searchRequest(searchString) {
     /**
      * Compose query string
+     *
      * @type {string}
      */
-    const queryString = new URLSearchParams({
-      [this.searchQueryParam]: searchString}
-    ).toString()
+    const queryString = new URLSearchParams({ [this.searchQueryParam]: searchString }
+    ).toString();
 
     /**
      * Get search data
@@ -834,7 +872,7 @@ export default class LinkAutocomplete {
   /**
    * Do we need to send requests to the server
    *
-   * @return {boolean}
+   * @returns {boolean}
    */
   isServerEnabled() {
     return !!this.searchEndpointUrl;

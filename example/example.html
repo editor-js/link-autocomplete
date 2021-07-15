@@ -84,7 +84,7 @@
        * - if true (or not specified), the order from 'tool' property will be used
        * - if an array of tool names, this order will be used
        */
-      inlineToolbar: ['bold', 'italic', 'LinkAutocomplete'],
+      inlineToolbar: ['bold', 'italic', 'link'],
 
       /**
        * Tools list
@@ -93,10 +93,10 @@
         Header,
         NestedList,
 
-        LinkAutocomplete: {
+        link: {
           class: LinkAutocomplete,
           config: {
-            endpointUrl: 'http://localhost:3000/',
+            endpoint: 'http://localhost:3000/',
             queryParam: 'search'
           }
         }

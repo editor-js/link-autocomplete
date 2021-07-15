@@ -1,12 +1,3 @@
-<!--
-
-TODO
-- check UX for slow internet connection
-
-- simplify event listening 
-- refactor the code
-
--->
 # Link Autocomplete
 
 Upgraded version of base inline link tool with your server's search.
@@ -47,10 +38,10 @@ var editor = EditorJS({
    * Tools list
    */
   tools: {
-    LinkAutocomplete: {
+    link: {
       class: LinkAutocomplete,
       config: {
-        endpointUrl: 'http://localhost:3000/',
+        endpoint: 'http://localhost:3000/',
         queryParam: 'search'
       }
     }
@@ -66,7 +57,7 @@ Search requests will be sent to the server by `GET` requests with a search strin
 
 List of server connection params which may be configured.
 
-`endpointUrl` — url to the server's endpoint for getting suggestions as links.
+`endpoint` — url to the server's endpoint for getting suggestions as links.
 
 `queryParam` — param name to be send with search string.
 
@@ -101,6 +92,8 @@ You can also return any other fields which will be stored in a link dataset.
 ## Output data
 
 Marked text will be wrapped with a `a` tag as a usual link.
+
+Additional data will be store in element's dataset: `data-name`, `data-description` and other custom fields.
 
 ```json
 {
