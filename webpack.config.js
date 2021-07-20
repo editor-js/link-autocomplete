@@ -14,6 +14,7 @@ module.exports = {
             options: {
               postcssOptions: {
                 plugins: [
+                  require('postcss-simple-vars'),
                   require('postcss-nested-ancestors'),
                   require('postcss-nested'),
                 ],

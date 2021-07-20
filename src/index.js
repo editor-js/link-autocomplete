@@ -31,11 +31,11 @@ const DICTIONARY = {
 };
 
 /**
- * Timeout before research in ms after keypressed
+ * Timeout before research in ms after key pressed
  *
  * @type {number}
  */
-const DEBOUNCE_TIMEOUT = 700;
+const DEBOUNCE_TIMEOUT = 500;
 
 /**
  * Link Autocomplete Tool for EditorJS
@@ -206,7 +206,7 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLButtonElement}
      */
-    this.nodes.toolButtons = Dom.make('BUTTON');
+    this.nodes.toolButtons = Dom.make('button');
     this.nodes.toolButtons.classList.add(this.CSS.button);
 
     /**
@@ -214,7 +214,7 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLSpanElement}
      */
-    this.nodes.toolButtonLink = Dom.make('SPAN', [ this.CSS.iconWrapper ]);
+    this.nodes.toolButtonLink = Dom.make('span', [ this.CSS.iconWrapper ]);
     this.nodes.toolButtonLink.innerHTML = require('../icons/link.svg');
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonLink);
 
@@ -223,7 +223,7 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLSpanElement}
      */
-    this.nodes.toolButtonUnlink = Dom.make('SPAN', [ this.CSS.iconWrapper ]);
+    this.nodes.toolButtonUnlink = Dom.make('span', [ this.CSS.iconWrapper ]);
     this.nodes.toolButtonUnlink.innerHTML = require('../icons/unlink.svg');
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonUnlink);
     this.toggleVisibility(this.nodes.toolButtonUnlink, false);
@@ -242,15 +242,16 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.actionsWrapper = Dom.make('DIV', [ this.CSS.actionsWrapper ]);
+    this.nodes.actionsWrapper = Dom.make('div', [ this.CSS.actionsWrapper ]);
+    this.toggleVisibility(this.nodes.actionsWrapper, false);
 
     /**
      * Render input field
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.inputWrapper = Dom.make('DIV');
-    this.nodes.inputField = Dom.make('INPUT', [ this.CSS.input ], {
+    this.nodes.inputWrapper = Dom.make('div');
+    this.nodes.inputField = Dom.make('input', [ this.CSS.input ], {
       placeholder: this.api.i18n.t(this.isServerEnabled ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink),
     });
 
@@ -259,7 +260,7 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.loader = Dom.make('DIV', [this.CSS.loader, this.CSS.loaderWrapper]);
+    this.nodes.loader = Dom.make('div', [this.CSS.loader, this.CSS.loaderWrapper]);
     this.toggleVisibility(this.nodes.loader, false);
 
     this.nodes.inputWrapper.appendChild(this.nodes.inputField);
@@ -271,7 +272,7 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.searchResults = Dom.make('DIV');
+    this.nodes.searchResults = Dom.make('div');
     /**
      * To improve UX we need to remove any 'selected' classes from search results
      */
@@ -296,16 +297,16 @@ export default class LinkAutocomplete {
     /**
      * Render link data block
      */
-    this.nodes.linkDataWrapper = Dom.make('DIV', [ this.CSS.linkDataWrapper ]);
+    this.nodes.linkDataWrapper = Dom.make('div', [ this.CSS.linkDataWrapper ]);
     this.toggleVisibility(this.nodes.linkDataWrapper, false);
 
-    this.nodes.linkDataTitleWrapper = Dom.make('DIV', [ this.CSS.linkDataTitleWrapper ]);
+    this.nodes.linkDataTitleWrapper = Dom.make('div', [ this.CSS.linkDataTitleWrapper ]);
     this.nodes.linkDataWrapper.appendChild(this.nodes.linkDataTitleWrapper);
     this.toggleVisibility(this.nodes.linkDataTitleWrapper, false);
 
-    this.nodes.linkDataName = Dom.make('DIV', [ this.CSS.linkDataName ]);
+    this.nodes.linkDataName = Dom.make('div', [ this.CSS.linkDataName ]);
     this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataName);
-    this.nodes.linkDataDescription = Dom.make('DIV', [ this.CSS.linkDataDescription ]);
+    this.nodes.linkDataDescription = Dom.make('div', [ this.CSS.linkDataDescription ]);
     this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataDescription);
 
     this.nodes.linkDataURL = Dom.make('A', [ this.CSS.linkDataURL ]);
@@ -590,9 +591,6 @@ export default class LinkAutocomplete {
    */
   clearSearchList() {
     this.nodes.searchResults.innerHTML = '';
-    // while (this.nodes.searchResults.firstChild) {
-    //   this.nodes.searchResults.firstChild.remove();
-    // }
   }
 
   /**
@@ -629,14 +627,14 @@ export default class LinkAutocomplete {
      * Fill up search list by new elements
      */
     items.forEach(item => {
-      const searchItem = Dom.make('DIV', [ this.CSS.searchItem ]);
+      const searchItem = Dom.make('div', [ this.CSS.searchItem ]);
 
       /**
        * Create a name for a link
        *
        * @type {HTMLElement}
        */
-      const searchItemName = Dom.make('DIV', [ this.CSS.searchItemName ], {
+      const searchItemName = Dom.make('div', [ this.CSS.searchItemName ], {
         innerText: item.name || item.href,
       });
 
@@ -646,7 +644,7 @@ export default class LinkAutocomplete {
        * Create a description element
        */
       if (item.description) {
-        const searchItemDescription = Dom.make('DIV', [ this.CSS.searchItemDescription ], {
+        const searchItemDescription = Dom.make('div', [ this.CSS.searchItemDescription ], {
           innerText: item.description,
         });
 
@@ -745,6 +743,11 @@ export default class LinkAutocomplete {
     }
 
     /**
+     * Show actions wrapper
+     */
+    this.toggleVisibility(this.nodes.actionsWrapper, true);
+
+    /**
      * Get result state after checkState() function
      * If tool button icon unlink is active then selected text is a link
      *
@@ -817,6 +820,8 @@ export default class LinkAutocomplete {
     if (!parentA) {
       return;
     }
+
+    this.toggleVisibility(this.nodes.actionsWrapper, true);
 
     /**
      * Fill up link data block
