@@ -859,7 +859,10 @@ export default class LinkAutocomplete {
    * @param {boolean} isVisible — visibility state
    */
   toggleVisibility(element, isVisible = true) {
-    element.classList[isVisible ? 'remove' : 'add'](this.CSS.hidden);
+    /**
+     * If not "isVisible" then add "hidden" class
+     */
+    element.classList.toggle(this.CSS.hidden, !isVisible);
   }
 
   /**
