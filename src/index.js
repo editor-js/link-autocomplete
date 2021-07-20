@@ -38,6 +38,19 @@ const DICTIONARY = {
 const DEBOUNCE_TIMEOUT = 250;
 
 /**
+ * @typedef {string} NavDirection
+ */
+/**
+ * Enum specifying keyboard navigation directions
+ *
+ * @enum {NavDirection}
+ */
+const NavDirection = {
+  Next: 'Next',
+  Previous: 'Previous',
+};
+
+/**
  * Link Autocomplete Tool for EditorJS
  */
 export default class LinkAutocomplete {
@@ -259,7 +272,6 @@ export default class LinkAutocomplete {
       placeholder: this.api.i18n.t(this.isServerEnabled ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink),
     });
 
-
     this.nodes.inputWrapper.appendChild(this.nodes.inputField);
     this.toggleVisibility(this.nodes.inputWrapper, false);
 
@@ -370,9 +382,12 @@ export default class LinkAutocomplete {
       /**
        * Handle arrow keys
        */
-      case isArrowKey:
-        this.selectItemByKeys(event);
+      case isArrowKey: {
+        const direction = event.keyCode === this.KEYS.DOWN ? NavDirection.Next : NavDirection.Previous;
+
+        this.navigate(direction);
         break;
+      }
 
       /**
        * Handle Enter key
@@ -451,83 +466,52 @@ export default class LinkAutocomplete {
     }, DEBOUNCE_TIMEOUT);
   }
 
-  toggleLoadingState(state){
+  /**
+   * Hides / shows loader
+   *
+   * @param {boolean} state - true to show
+   * @returns {void}
+   */
+  toggleLoadingState(state) {
     this.nodes.inputWrapper.classList.toggle(this.CSS.fieldLoading, state);
   }
 
   /**
-   * Handle arrow keys pressing
+   * Navigate found items
    *
-   * @param {KeyboardEvent} event
+   * @param {NavDirection} direction - next or previous
+   * @returns {void}
    */
-  selectItemByKeys(event) {
-    /**
-     * Detect direction for an item to be selected next
-     * Key arrow down: index + 1
-     * Key arrow up: index - 1
-     */
-    const indexDelta = event.keyCode === this.KEYS.DOWN ? 1 : -1;
-
+  navigate(direction) {
     /**
      * Getting search items
      */
-    const searchItems = this.getSearchItems();
+    const items = this.getSearchItems();
     const selectedItem = this.getSelectedItem();
 
-    /**
-     * Get index of selected item
-     *
-     * @type {number}
-     */
-    const indexOfSelectedItem = searchItems.indexOf(selectedItem);
-
-    /**
-     * Next item index
-     * This value will be updated below
-     *
-     * @type {number}
-     */
-    let nextIndex = 0;
-
-    /**
-     * If there is selected item
-     */
-    if (indexOfSelectedItem !== -1) {
-      /**
-       * Magic math for getting correct index of item
-       *
-       * @type {number}
-       */
-      nextIndex = (indexOfSelectedItem + indexDelta + searchItems.length) % searchItems.length;
-
-      /**
-       * Deselect prev item
-       */
-      searchItems[indexOfSelectedItem].classList.remove(this.CSS.searchItemSelected);
-
-    /**
-     * If there is no search items was selected
-     */
-    } else {
-      /**
-       * If no search items then do nothing
-       */
-      if (!searchItems.length) {
-        return;
-      }
-
-      /**
-       * Detect index for the next selected item depending the arrow key direction
-       *
-       * @type {number}
-       */
-      nextIndex = indexDelta === 1 ? 0 : searchItems.length - 1;
+    if (!items.length) {
+      return;
     }
 
     /**
-     * Highlight the next item
+     * Next: index + 1
+     * Prev: index - 1
      */
-    searchItems[nextIndex].classList.add(this.CSS.searchItemSelected);
+    const indexDelta = direction === NavDirection.Next ? 1 : -1;
+    const selectedItemIndex = selectedItem ? items.indexOf(selectedItem) : -1;
+    let nextIndex = selectedItemIndex + indexDelta;
+
+    if (nextIndex > items.length - 1) {
+      nextIndex = 0;
+    } else if (nextIndex < 0) {
+      nextIndex = items.length - 1;
+    }
+
+    if (selectedItem) {
+      selectedItem.classList.remove(this.CSS.searchItemSelected);
+    }
+
+    items[nextIndex].classList.add(this.CSS.searchItemSelected);
   }
 
   /**
