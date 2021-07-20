@@ -11,7 +11,7 @@ import notifier from 'codex-notifier';
 /**
  * Import functions
  */
-import { Dom } from './utils/dom';
+import * as Dom from './utils/dom';
 import { SelectionUtils } from './utils/selection';
 import { Utils } from './utils/utils';
 
@@ -23,7 +23,7 @@ import { Utils } from './utils/utils';
  */
 
 const DICTIONARY = {
-  pasteOrSearch: 'Paste or Search',
+  pasteOrSearch: 'Paste or search',
   pasteALink: 'Paste a link',
   searchRequestError: 'Cannot process search request because of',
   invalidServerData: 'Server responded with invalid data',
@@ -31,7 +31,7 @@ const DICTIONARY = {
 };
 
 /**
- * Timeout before research in ms after key pressed
+ * Timeout before search in ms after key pressed
  *
  * @type {number}
  */
@@ -93,9 +93,12 @@ export default class LinkAutocomplete {
       hidden: 'ce-link-autocomplete__hidden',
 
       actionsWrapper: 'ce-link-autocomplete__actions-wrapper',
-      input: 'ce-link-autocomplete__input',
-      loader: 'ce-link-autocomplete__loader',
-      loaderWrapper: 'ce-link-autocomplete__loader-wrapper',
+
+      field: 'ce-link-autocomplete__field',
+      fieldLoading: 'ce-link-autocomplete__field--loading',
+      fieldInput: 'ce-link-autocomplete__field-input',
+
+      foundItems: 'ce-link-autocomplete__items',
 
       searchItem: 'ce-link-autocomplete__search-item',
       searchItemSelected: 'ce-link-autocomplete__search-item--selected',
@@ -115,15 +118,17 @@ export default class LinkAutocomplete {
   /**
    * Initialize basic data
    *
+   * @param config.config
    * @param {object} config — initial config for the tool
    * @param {object} api — methods from Core
+   * @param config.api
    */
   constructor({ config, api }) {
     /**
      * Essential tools
      */
     this.api = api;
-    this.config = config;
+    this.config = config || {};
     this.selection = new SelectionUtils();
 
     /**
@@ -164,7 +169,6 @@ export default class LinkAutocomplete {
       actionsWrapper: null,
       inputWrapper: null,
       inputField: null,
-      loader: null,
 
       searchResults: null,
 
@@ -250,21 +254,13 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.inputWrapper = Dom.make('div');
-    this.nodes.inputField = Dom.make('input', [ this.CSS.input ], {
+    this.nodes.inputWrapper = Dom.make('div', this.CSS.field);
+    this.nodes.inputField = Dom.make('input', this.CSS.fieldInput, {
       placeholder: this.api.i18n.t(this.isServerEnabled ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink),
     });
 
-    /**
-     * Render loader
-     *
-     * @type {HTMLDivElement}
-     */
-    this.nodes.loader = Dom.make('div', [this.CSS.loader, this.CSS.loaderWrapper]);
-    this.toggleVisibility(this.nodes.loader, false);
 
     this.nodes.inputWrapper.appendChild(this.nodes.inputField);
-    this.nodes.inputWrapper.appendChild(this.nodes.loader);
     this.toggleVisibility(this.nodes.inputWrapper, false);
 
     /**
@@ -272,7 +268,7 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.searchResults = Dom.make('div');
+    this.nodes.searchResults = Dom.make('div', this.CSS.foundItems);
     /**
      * To improve UX we need to remove any 'selected' classes from search results
      */
@@ -309,12 +305,12 @@ export default class LinkAutocomplete {
     /**
      * Listen to pressed enter key or up and down arrows
      */
-    this.nodes.inputField.addEventListener('keydown', this.keydownFieldLintening.bind(this));
+    this.nodes.inputField.addEventListener('keydown', this.fieldKeydownHandler.bind(this));
 
     /**
      * Listen to input
      */
-    this.nodes.inputField.addEventListener('input', this.inputFieldListening.bind(this));
+    this.nodes.inputField.addEventListener('input', this.fieldInputHandler.bind(this));
 
     /**
      * Render link data block
@@ -349,7 +345,7 @@ export default class LinkAutocomplete {
    *
    * @param {KeyboardEvent} event — keydown event
    */
-  keydownFieldLintening(event) {
+  fieldKeydownHandler(event) {
     const isArrowKey = [this.KEYS.UP, this.KEYS.DOWN].includes(event.keyCode);
     const isEnterKey = this.KEYS.ENTER === event.keyCode;
 
@@ -392,7 +388,7 @@ export default class LinkAutocomplete {
    *
    * @param {KeyboardEvent} event — input event
    */
-  inputFieldListening(event) {
+  fieldInputHandler(event) {
     /**
      * Stop debounce timer
      */
@@ -437,7 +433,7 @@ export default class LinkAutocomplete {
       /**
        * Show the loader during request
        */
-      this.toggleVisibility(this.nodes.loader, true);
+      this.toggleLoadingState(true);
       try {
         const searchDataItems = await this.searchRequest(searchString);
 
@@ -451,8 +447,12 @@ export default class LinkAutocomplete {
           style: 'error',
         });
       }
-      this.toggleVisibility(this.nodes.loader, false);
+      this.toggleLoadingState(false);
     }, DEBOUNCE_TIMEOUT);
+  }
+
+  toggleLoadingState(state){
+    this.nodes.inputWrapper.classList.toggle(this.CSS.fieldLoading, state);
   }
 
   /**
@@ -565,7 +565,7 @@ export default class LinkAutocomplete {
     /**
      * If input is not a valid url then show an error
      */
-    if (!url(href)) {
+    if (!Utils.isUrl(href)) {
       notifier.show({
         message: DICTIONARY.invalidUrl,
         style: 'error',
@@ -687,7 +687,7 @@ export default class LinkAutocomplete {
   /**
    * Process 'press' event on the search item
    *
-   * @param {Element} element
+   * @param {Element} element - pressed item element
    */
   searchItemPressed(element) {
     /**

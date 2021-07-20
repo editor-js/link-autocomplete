@@ -1,4 +1,4 @@
-import { Dom } from './dom';
+import * as Dom from './dom';
 
 /**
  *
