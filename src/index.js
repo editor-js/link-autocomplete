@@ -35,7 +35,7 @@ const DICTIONARY = {
  *
  * @type {number}
  */
-const DEBOUNCE_TIMEOUT = 500;
+const DEBOUNCE_TIMEOUT = 300;
 
 /**
  * Link Autocomplete Tool for EditorJS
