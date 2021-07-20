@@ -889,14 +889,28 @@ export default class LinkAutocomplete {
     const queryString = new URLSearchParams({ [this.searchQueryParam]: searchString }
     ).toString();
 
-    /**
-     * Get search data
-     *
-     * @type {Promise<any>}
-     */
-    const searchData = (await fetch(`${this.searchEndpointUrl}?${queryString}`)).json();
+    try {
+      /**
+       * Get raw search data
+       */
+      const searchResponseRaw = await fetch(`${this.searchEndpointUrl}?${queryString}`);
 
-    return searchData;
+      /**
+       * Get JSON decoded data
+       */
+      const searchResponse = await searchResponseRaw.json();
+
+      if (searchResponse && searchResponse.success) {
+        return searchResponse.items;
+      }
+    } catch (e) {
+      notifier.show({
+        message: `${DICTIONARY.searchRequestError} "${e.message}"`,
+        style: 'error',
+      });
+    }
+
+    return [];
   }
 
   /**

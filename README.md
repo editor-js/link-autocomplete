@@ -65,28 +65,32 @@ If there is no `endpointUrl` then tool will work only for pasted links.
 
 ## Server response data format
 
-For endpoint requests server should answer with a JSON data
-as array of link items. `name` and `href` params are required
-for each item. `description` param is optional.
+For endpoint requests server should answer with a JSON data object
+with boolean `success` state and `items` as array of link items.
+`name` and `href` params are required for each item. `description`
+param is optional.
 
 Content-Type: `application/json`.
 
 You can also return any other fields which will be stored in a link dataset.
 
 ```
-[
-  {
-    href: `https://codex.so/media`,
-    name: `The first item`,
-    description: ''
-  },
-  {
-    href: `https://codex.so/editor`,
-    name: `The second item`
-    description: ''
-  },
-  ...
-]
+{
+  success: true,
+  items: [
+    {
+      href: `https://codex.so/media`,
+      name: `The first item`,
+      description: ''
+    },
+    {
+      href: `https://codex.so/editor`,
+      name: `The second item`
+      description: ''
+    },
+    ...
+  ]
+}
 ```
 
 ## Output data
