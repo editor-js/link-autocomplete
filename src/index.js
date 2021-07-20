@@ -283,6 +283,28 @@ export default class LinkAutocomplete {
         item.classList.remove(this.CSS.searchItemSelected);
       });
     });
+    /**
+     * Enable search results click listener
+     */
+    this.nodes.searchResults.addEventListener('click', (event) => {
+      const closestSearchItem = event.target.closest(`.${this.CSS.searchItem}`);
+
+      /**
+       * If click target search item is missing then do nothing
+       */
+      if (!closestSearchItem) {
+        return;
+      }
+
+      /**
+       * Preventing events that will be able to happen
+       */
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      this.searchItemPressed(closestSearchItem);
+    });
 
     /**
      * Listen to pressed enter key or up and down arrows
@@ -656,20 +678,6 @@ export default class LinkAutocomplete {
        */
       Object.keys(item).forEach(key => {
         searchItem.dataset[key] = item[key];
-      });
-
-      /**
-       * Enable click listener
-       */
-      searchItem.addEventListener('click', (event) => {
-        /**
-         * Preventing events that will be able to happen
-         */
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        this.searchItemPressed(searchItem);
       });
 
       this.nodes.searchResults.appendChild(searchItem);
