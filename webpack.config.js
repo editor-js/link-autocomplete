@@ -39,7 +39,7 @@ module.exports = {
     extensions: [ '.js' ],
   },
   output: {
-    filename: 'bundle.js',
+    filename: 'link-autocomplete.js',
     path: path.resolve(__dirname, 'dist'),
     library: 'LinkAutocomplete',
     libraryTarget: 'umd',

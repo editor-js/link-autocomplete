@@ -11,7 +11,6 @@ import notifier from 'codex-notifier';
 /**
  * Import functions
  */
-import { url } from './utils/url';
 import { Dom } from './utils/dom';
 import { SelectionUtils } from './utils/selection';
 import { Utils } from './utils/utils';
@@ -205,15 +204,15 @@ export default class LinkAutocomplete {
     /**
      * Create wrapper for buttons
      *
-     * @type {HTMLDivElement}
+     * @type {HTMLButtonElement}
      */
-    this.nodes.toolButtons = document.createElement('BUTTON');
+    this.nodes.toolButtons = Dom.make('BUTTON');
     this.nodes.toolButtons.classList.add(this.CSS.button);
 
     /**
      * Create Link button
      *
-     * @type {HTMLDivElement}
+     * @type {HTMLSpanElement}
      */
     this.nodes.toolButtonLink = Dom.make('SPAN', [ this.CSS.iconWrapper ]);
     this.nodes.toolButtonLink.innerHTML = require('../icons/link.svg');
@@ -222,7 +221,7 @@ export default class LinkAutocomplete {
     /**
      * Create Unlink button
      *
-     * @type {HTMLDivElement}
+     * @type {HTMLSpanElement}
      */
     this.nodes.toolButtonUnlink = Dom.make('SPAN', [ this.CSS.iconWrapper ]);
     this.nodes.toolButtonUnlink.innerHTML = require('../icons/unlink.svg');
@@ -240,11 +239,15 @@ export default class LinkAutocomplete {
   renderActions() {
     /**
      * Render actions wrapper
+     *
+     * @type {HTMLDivElement}
      */
     this.nodes.actionsWrapper = Dom.make('DIV', [ this.CSS.actionsWrapper ]);
 
     /**
      * Render input field
+     *
+     * @type {HTMLDivElement}
      */
     this.nodes.inputWrapper = Dom.make('DIV');
     this.nodes.inputField = Dom.make('INPUT', [ this.CSS.input ], {
@@ -253,6 +256,8 @@ export default class LinkAutocomplete {
 
     /**
      * Render loader
+     *
+     * @type {HTMLDivElement}
      */
     this.nodes.loader = Dom.make('DIV', [this.CSS.loader, this.CSS.loaderWrapper]);
     this.toggleVisibility(this.nodes.loader, false);
@@ -263,6 +268,8 @@ export default class LinkAutocomplete {
 
     /**
      * Render search results
+     *
+     * @type {HTMLDivElement}
      */
     this.nodes.searchResults = Dom.make('DIV');
     /**
@@ -279,43 +286,7 @@ export default class LinkAutocomplete {
     /**
      * Listen to pressed enter key or up and down arrows
      */
-    this.nodes.inputField.addEventListener('keydown', (event) => {
-      const isArrowKey = [this.KEYS.UP, this.KEYS.DOWN].includes(event.keyCode);
-      const isEnterKey = this.KEYS.ENTER === event.keyCode;
-
-      /**
-       * If key is not an arrow or enter
-       */
-      if (!isArrowKey && !isEnterKey) {
-        return;
-      }
-
-      /**
-       * Preventing events that will be able to happen
-       */
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-
-      /**
-       * Choose handler
-       */
-      switch (true) {
-        /**
-         * Handle arrow keys
-         */
-        case isArrowKey:
-          this.selectItemByKeys(event);
-          break;
-
-        /**
-         * Handle Enter key
-         */
-        case isEnterKey:
-          this.processEnterKeypressed();
-          break;
-      }
-    });
+    this.nodes.inputField.addEventListener('keydown', this.keydownFieldLintening.bind(this));
 
     /**
      * Listen to input
@@ -324,8 +295,6 @@ export default class LinkAutocomplete {
 
     /**
      * Render link data block
-     *
-     * @type {HTMLElement}
      */
     this.nodes.linkDataWrapper = Dom.make('DIV', [ this.CSS.linkDataWrapper ]);
     this.toggleVisibility(this.nodes.linkDataWrapper, false);
@@ -353,9 +322,52 @@ export default class LinkAutocomplete {
   }
 
   /**
+   * Process keydown events to detect arrow keys or enter pressed
+   *
+   * @param {KeyboardEvent} event — keydown event
+   */
+  keydownFieldLintening(event) {
+    const isArrowKey = [this.KEYS.UP, this.KEYS.DOWN].includes(event.keyCode);
+    const isEnterKey = this.KEYS.ENTER === event.keyCode;
+
+    /**
+     * If key is not an arrow or enter
+     */
+    if (!isArrowKey && !isEnterKey) {
+      return;
+    }
+
+    /**
+     * Preventing events that will be able to happen
+     */
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    /**
+     * Choose handler
+     */
+    switch (true) {
+      /**
+       * Handle arrow keys
+       */
+      case isArrowKey:
+        this.selectItemByKeys(event);
+        break;
+
+      /**
+       * Handle Enter key
+       */
+      case isEnterKey:
+        this.processEnterKeyPressed();
+        break;
+    }
+  }
+
+  /**
    * Input event listener for a input field
    *
-   * @param {KeyboardEvent} event
+   * @param {KeyboardEvent} event — input event
    */
   inputFieldListening(event) {
     /**
@@ -380,7 +392,7 @@ export default class LinkAutocomplete {
     /**
      * If a valid link was entered then show only one list item with a link href.
      */
-    if (url(searchString)) {
+    if (Utils.isUrl(searchString)) {
       this.generateSearchList([ {
         href: searchString,
       } ]);
@@ -447,6 +459,14 @@ export default class LinkAutocomplete {
     const indexOfSelectedItem = searchItems.indexOf(selectedItem);
 
     /**
+     * Next item index
+     * This value will be updated below
+     *
+     * @type {number}
+     */
+    let nextIndex = 0;
+
+    /**
      * If there is selected item
      */
     if (indexOfSelectedItem !== -1) {
@@ -455,17 +475,12 @@ export default class LinkAutocomplete {
        *
        * @type {number}
        */
-      const nextIndex = (indexOfSelectedItem + indexDelta + searchItems.length) % searchItems.length;
+      nextIndex = (indexOfSelectedItem + indexDelta + searchItems.length) % searchItems.length;
 
       /**
        * Deselect prev item
        */
       searchItems[indexOfSelectedItem].classList.remove(this.CSS.searchItemSelected);
-
-      /**
-       * Highlight the next item
-       */
-      searchItems[nextIndex].classList.add(this.CSS.searchItemSelected);
 
     /**
      * If there is no search items was selected
@@ -474,7 +489,7 @@ export default class LinkAutocomplete {
       /**
        * If no search items then do nothing
        */
-      if (!searchItems[0]) {
+      if (!searchItems.length) {
         return;
       }
 
@@ -483,21 +498,19 @@ export default class LinkAutocomplete {
        *
        * @type {number}
        */
-      const nextIndex = indexDelta === 1 ? 0 : searchItems.length - 1;
-
-      /**
-       * Highlight the next item
-       */
-      searchItems[nextIndex].classList.add(this.CSS.searchItemSelected);
+      nextIndex = indexDelta === 1 ? 0 : searchItems.length - 1;
     }
+
+    /**
+     * Highlight the next item
+     */
+    searchItems[nextIndex].classList.add(this.CSS.searchItemSelected);
   }
 
   /**
    * Process enter key pressing
-   *
-   * @returns
    */
-  processEnterKeypressed() {
+  processEnterKeyPressed() {
     /**
      * Try to get selected item
      *
@@ -576,15 +589,16 @@ export default class LinkAutocomplete {
    * Remove search result elements
    */
   clearSearchList() {
-    while (this.nodes.searchResults.firstChild) {
-      this.nodes.searchResults.firstChild.remove();
-    }
+    this.nodes.searchResults.innerHTML = '';
+    // while (this.nodes.searchResults.firstChild) {
+    //   this.nodes.searchResults.firstChild.remove();
+    // }
   }
 
   /**
    * Fill up a search list results by data
    *
-   * @param {SearchItemData[]} items
+   * @param {SearchItemData[]} items — items to be shown
    */
   generateSearchList(items = []) {
     /**
