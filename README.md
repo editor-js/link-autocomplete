@@ -1,6 +1,6 @@
 # Link Autocomplete
 
-Upgraded version of base inline link tool with your server's search.
+An upgraded version of base inline link tool with your server's search.
 
 ![](assets/example.gif)
 
@@ -57,24 +57,23 @@ Search requests will be sent to the server by `GET` requests with a search strin
 
 List of server connection params which may be configured.
 
-`endpoint` — url to the server's endpoint for getting suggestions as links.
+`endpoint` — URL of the server's endpoint for getting suggestions.
 
-`queryParam` — param name to be send with search string.
+`queryParam` — param name to be sent with the search string.
 
-If there is no `endpointUrl` then tool will work only for pasted links.
+If there is no `endpoint` then tool will work only for pasted links.
 
 ## Server response data format
 
-For endpoint requests server should answer with a JSON data object
-with boolean `success` state and `items` as array of link items.
-`name` and `href` params are required for each item. `description`
-param is optional.
+For endpoint requests server **should** answer with a JSON containing following properties:
+
+- `success` (`boolean`) — state of processing: `true` or `false`  
+- `items` (`{name: string, href: string, description?: string}`) — an array of found items. Each item *must* contain `name` and `href` params. The `description`
+param is optional. You can also return any other fields which will be stored in a link dataset.
 
 Content-Type: `application/json`.
 
-You can also return any other fields which will be stored in a link dataset.
-
-```
+```json
 {
   success: true,
   items: [
@@ -110,7 +109,7 @@ Additional data will be store in element's dataset: `data-name`, `data-descripti
 
 ## Shortcut
 
-By default shortcut `CMD (CTRL) + K` is used for pasting links as usual.
+By default, shortcut `CMD (CTRL) + K` is used for pasting links as usual.
 
 ## I18n
 

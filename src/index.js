@@ -98,9 +98,8 @@ export default class LinkAutocomplete {
    *
    * @returns {object<string, string>} — keys and class names
    */
-  get CSS() {
+  static get CSS() {
     return {
-      button: 'ce-inline-tool',
       iconWrapper: 'ce-link-autocomplete__icon-wrapper',
 
       hidden: 'ce-link-autocomplete__hidden',
@@ -123,18 +122,15 @@ export default class LinkAutocomplete {
       linkDataName: 'ce-link-autocomplete__link-data-name',
       linkDataDescription: 'ce-link-autocomplete__link-data-description',
       linkDataURL: 'ce-link-autocomplete__link-data-url',
-
-      isActive: 'ce-inline-tool--active',
     };
   }
 
   /**
    * Initialize basic data
    *
-   * @param config.config
-   * @param {object} config — initial config for the tool
-   * @param {object} api — methods from Core
-   * @param config.api
+   * @param {object} options - tools constructor params
+   * @param {object} options.config — initial config for the tool
+   * @param {object} options.api — methods from Core
    */
   constructor({ config, api }) {
     /**
@@ -223,16 +219,16 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLButtonElement}
      */
-    this.nodes.toolButtons = Dom.make('button');
-    this.nodes.toolButtons.classList.add(this.CSS.button);
+    this.nodes.toolButtons = Dom.make('button', this.api.styles.inlineToolButton);
 
     /**
      * Create Link button
      *
      * @type {HTMLSpanElement}
      */
-    this.nodes.toolButtonLink = Dom.make('span', [ this.CSS.iconWrapper ]);
-    this.nodes.toolButtonLink.innerHTML = require('../icons/link.svg');
+    this.nodes.toolButtonLink = Dom.make('span', LinkAutocomplete.CSS.iconWrapper, {
+      innerHTML: require('../icons/link.svg'),
+    });
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonLink);
 
     /**
@@ -240,8 +236,9 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLSpanElement}
      */
-    this.nodes.toolButtonUnlink = Dom.make('span', [ this.CSS.iconWrapper ]);
-    this.nodes.toolButtonUnlink.innerHTML = require('../icons/unlink.svg');
+    this.nodes.toolButtonUnlink = Dom.make('span', LinkAutocomplete.CSS.iconWrapper, {
+      innerHTML: require('../icons/unlink.svg'),
+    });
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonUnlink);
     this.toggleVisibility(this.nodes.toolButtonUnlink, false);
 
@@ -259,7 +256,7 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.actionsWrapper = Dom.make('div', [ this.CSS.actionsWrapper ]);
+    this.nodes.actionsWrapper = Dom.make('div', [ LinkAutocomplete.CSS.actionsWrapper ]);
     this.toggleVisibility(this.nodes.actionsWrapper, false);
 
     /**
@@ -267,8 +264,8 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.inputWrapper = Dom.make('div', this.CSS.field);
-    this.nodes.inputField = Dom.make('input', this.CSS.fieldInput, {
+    this.nodes.inputWrapper = Dom.make('div', LinkAutocomplete.CSS.field);
+    this.nodes.inputField = Dom.make('input', LinkAutocomplete.CSS.fieldInput, {
       placeholder: this.api.i18n.t(this.isServerEnabled ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink),
     });
 
@@ -280,7 +277,7 @@ export default class LinkAutocomplete {
      *
      * @type {HTMLDivElement}
      */
-    this.nodes.searchResults = Dom.make('div', this.CSS.foundItems);
+    this.nodes.searchResults = Dom.make('div', LinkAutocomplete.CSS.foundItems);
     /**
      * To improve UX we need to remove any 'selected' classes from search results
      */
@@ -288,14 +285,14 @@ export default class LinkAutocomplete {
       const searchItems = this.getSearchItems();
 
       searchItems.forEach(item => {
-        item.classList.remove(this.CSS.searchItemSelected);
+        item.classList.remove(LinkAutocomplete.CSS.searchItemSelected);
       });
     });
     /**
      * Enable search results click listener
      */
     this.nodes.searchResults.addEventListener('click', (event) => {
-      const closestSearchItem = event.target.closest(`.${this.CSS.searchItem}`);
+      const closestSearchItem = event.target.closest(`.${LinkAutocomplete.CSS.searchItem}`);
 
       /**
        * If click target search item is missing then do nothing
@@ -327,19 +324,19 @@ export default class LinkAutocomplete {
     /**
      * Render link data block
      */
-    this.nodes.linkDataWrapper = Dom.make('div', [ this.CSS.linkDataWrapper ]);
+    this.nodes.linkDataWrapper = Dom.make('div', LinkAutocomplete.CSS.linkDataWrapper);
     this.toggleVisibility(this.nodes.linkDataWrapper, false);
 
-    this.nodes.linkDataTitleWrapper = Dom.make('div', [ this.CSS.linkDataTitleWrapper ]);
+    this.nodes.linkDataTitleWrapper = Dom.make('div', LinkAutocomplete.CSS.linkDataTitleWrapper);
     this.nodes.linkDataWrapper.appendChild(this.nodes.linkDataTitleWrapper);
     this.toggleVisibility(this.nodes.linkDataTitleWrapper, false);
 
-    this.nodes.linkDataName = Dom.make('div', [ this.CSS.linkDataName ]);
+    this.nodes.linkDataName = Dom.make('div', LinkAutocomplete.CSS.linkDataName);
     this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataName);
-    this.nodes.linkDataDescription = Dom.make('div', [ this.CSS.linkDataDescription ]);
+    this.nodes.linkDataDescription = Dom.make('div', LinkAutocomplete.CSS.linkDataDescription);
     this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataDescription);
 
-    this.nodes.linkDataURL = Dom.make('A', [ this.CSS.linkDataURL ]);
+    this.nodes.linkDataURL = Dom.make('A', LinkAutocomplete.CSS.linkDataURL);
     this.nodes.linkDataWrapper.appendChild(this.nodes.linkDataURL);
 
     /**
@@ -356,6 +353,7 @@ export default class LinkAutocomplete {
    * Process keydown events to detect arrow keys or enter pressed
    *
    * @param {KeyboardEvent} event — keydown event
+   * @returns {void}
    */
   fieldKeydownHandler(event) {
     const isArrowKey = [this.KEYS.UP, this.KEYS.DOWN].includes(event.keyCode);
@@ -402,6 +400,7 @@ export default class LinkAutocomplete {
    * Input event listener for a input field
    *
    * @param {KeyboardEvent} event — input event
+   * @returns {void}
    */
   fieldInputHandler(event) {
     /**
@@ -415,7 +414,7 @@ export default class LinkAutocomplete {
     const searchString = event.target.value;
 
     /**
-     * If search string in empty then clear search list
+     * If search string is empty then clear search list
      */
     if (!searchString || !searchString.trim()) {
       this.clearSearchList();
@@ -462,6 +461,7 @@ export default class LinkAutocomplete {
           style: 'error',
         });
       }
+
       this.toggleLoadingState(false);
     }, DEBOUNCE_TIMEOUT);
   }
@@ -473,7 +473,7 @@ export default class LinkAutocomplete {
    * @returns {void}
    */
   toggleLoadingState(state) {
-    this.nodes.inputWrapper.classList.toggle(this.CSS.fieldLoading, state);
+    this.nodes.inputWrapper.classList.toggle(LinkAutocomplete.CSS.fieldLoading, state);
   }
 
   /**
@@ -508,14 +508,16 @@ export default class LinkAutocomplete {
     }
 
     if (selectedItem) {
-      selectedItem.classList.remove(this.CSS.searchItemSelected);
+      selectedItem.classList.remove(LinkAutocomplete.CSS.searchItemSelected);
     }
 
-    items[nextIndex].classList.add(this.CSS.searchItemSelected);
+    items[nextIndex].classList.add(LinkAutocomplete.CSS.searchItemSelected);
   }
 
   /**
    * Process enter key pressing
+   *
+   * @returns {void}
    */
   processEnterKeyPressed() {
     /**
@@ -578,7 +580,7 @@ export default class LinkAutocomplete {
    * @returns {Element[]}
    */
   getSearchItems() {
-    const nodesList = this.nodes.searchResults.querySelectorAll(`.${this.CSS.searchItem}`);
+    const nodesList = this.nodes.searchResults.querySelectorAll(`.${LinkAutocomplete.CSS.searchItem}`);
 
     return Array.from(nodesList);
   }
@@ -589,11 +591,13 @@ export default class LinkAutocomplete {
    * @returns {Element|null}
    */
   getSelectedItem() {
-    return this.nodes.searchResults.querySelector(`.${this.CSS.searchItemSelected}`);
+    return this.nodes.searchResults.querySelector(`.${LinkAutocomplete.CSS.searchItemSelected}`);
   }
 
   /**
    * Remove search result elements
+   *
+   * @returns {void}
    */
   clearSearchList() {
     this.nodes.searchResults.innerHTML = '';
@@ -603,6 +607,7 @@ export default class LinkAutocomplete {
    * Fill up a search list results by data
    *
    * @param {SearchItemData[]} items — items to be shown
+   * @returns {void}
    */
   generateSearchList(items = []) {
     /**
@@ -633,14 +638,12 @@ export default class LinkAutocomplete {
      * Fill up search list by new elements
      */
     items.forEach(item => {
-      const searchItem = Dom.make('div', [ this.CSS.searchItem ]);
+      const searchItem = Dom.make('div', [ LinkAutocomplete.CSS.searchItem ]);
 
       /**
        * Create a name for a link
-       *
-       * @type {HTMLElement}
        */
-      const searchItemName = Dom.make('div', [ this.CSS.searchItemName ], {
+      const searchItemName = Dom.make('div', [ LinkAutocomplete.CSS.searchItemName ], {
         innerText: item.name || item.href,
       });
 
@@ -650,7 +653,7 @@ export default class LinkAutocomplete {
        * Create a description element
        */
       if (item.description) {
-        const searchItemDescription = Dom.make('div', [ this.CSS.searchItemDescription ], {
+        const searchItemDescription = Dom.make('div', [ LinkAutocomplete.CSS.searchItemDescription ], {
           innerText: item.description,
         });
 
@@ -672,6 +675,7 @@ export default class LinkAutocomplete {
    * Process 'press' event on the search item
    *
    * @param {Element} element - pressed item element
+   * @returns {void}
    */
   searchItemPressed(element) {
     /**
@@ -683,8 +687,6 @@ export default class LinkAutocomplete {
 
     /**
      * Get link's href
-     *
-     * @type {string}
      */
     const href = element.dataset['href'];
 
@@ -701,8 +703,6 @@ export default class LinkAutocomplete {
 
     /**
      * Get this link element
-     *
-     * @type {HTMLElement}
      */
     const newLink = this.selection.findParentTag(this.tagName);
 
@@ -728,6 +728,7 @@ export default class LinkAutocomplete {
    * Handle clicks on the Inline Toolbar icon
    *
    * @param {Range} range — range to wrap with link
+   * @returns {void}
    */
   surround(range) {
     if (!range) {
@@ -745,7 +746,7 @@ export default class LinkAutocomplete {
      *
      * @type {boolean}
      */
-    const isLinkSelected = this.nodes.toolButtonUnlink.classList.contains(this.CSS.isActive);
+    const isLinkSelected = this.nodes.toolButtonUnlink.classList.contains(this.api.styles.inlineToolButtonActive);
 
     /**
      * Create a fake selection
@@ -790,6 +791,7 @@ export default class LinkAutocomplete {
    * Check for a tool's state
    *
    * @param {Selection} selection — selection to be passed from Core
+   * @returns {void}
    */
   checkState(selection) {
     const text = selection.anchorNode;
@@ -841,7 +843,7 @@ export default class LinkAutocomplete {
      */
     this.toggleVisibility(this.nodes.toolButtonLink, false);
     this.toggleVisibility(this.nodes.toolButtonUnlink, true);
-    this.nodes.toolButtonUnlink.classList.add(this.CSS.isActive);
+    this.nodes.toolButtonUnlink.classList.add(this.api.styles.inlineToolButtonActive);
   }
 
   /**
@@ -849,12 +851,13 @@ export default class LinkAutocomplete {
    *
    * @param {HTMLElement} element — target element
    * @param {boolean} isVisible — visibility state
+   * @returns {void}
    */
   toggleVisibility(element, isVisible = true) {
     /**
      * If not "isVisible" then add "hidden" class
      */
-    element.classList.toggle(this.CSS.hidden, !isVisible);
+    element.classList.toggle(LinkAutocomplete.CSS.hidden, !isVisible);
   }
 
   /**
@@ -862,7 +865,7 @@ export default class LinkAutocomplete {
    *
    * @param {string} searchString - search string input
    *
-   * @returns {Promise<void>}
+   * @returns {Promise<SearchItemData[]>}
    */
   async searchRequest(searchString) {
     /**
@@ -870,8 +873,7 @@ export default class LinkAutocomplete {
      *
      * @type {string}
      */
-    const queryString = new URLSearchParams({ [this.searchQueryParam]: searchString }
-    ).toString();
+    const queryString = new URLSearchParams({ [this.searchQueryParam]: searchString }).toString();
 
     try {
       /**
@@ -886,6 +888,8 @@ export default class LinkAutocomplete {
 
       if (searchResponse && searchResponse.success) {
         return searchResponse.items;
+      } else {
+        console.warn('Link Autocomplete: invalid response format: "success: true" expected, but got %o. Response: %o', searchResponse.success, searchResponse);
       }
     } catch (e) {
       notifier.show({
@@ -908,6 +912,8 @@ export default class LinkAutocomplete {
 
   /**
    * Function called with Inline Toolbar closing
+   *
+   * @returns {void}
    */
   clear() {
     if (this.selection.isFakeBackgroundEnabled) {
@@ -918,6 +924,7 @@ export default class LinkAutocomplete {
 
       this.selection.restore();
       this.selection.removeFakeBackground();
+      this.selection.clearSaved();
 
       // and recover new selection after removing fake background
       currentSelection.restore();

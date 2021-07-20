@@ -1,7 +1,7 @@
 import * as Dom from './dom';
 
 /**
- *
+ * Lib for working with selection
  */
 export class SelectionUtils {
   /**
