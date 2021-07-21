@@ -306,7 +306,6 @@ export default class LinkAutocomplete {
        */
       event.preventDefault();
       event.stopPropagation();
-      event.stopImmediatePropagation();
 
       this.searchItemPressed(closestSearchItem);
     });
@@ -371,7 +370,6 @@ export default class LinkAutocomplete {
      */
     event.preventDefault();
     event.stopPropagation();
-    event.stopImmediatePropagation();
 
     /**
      * Choose handler
