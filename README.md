@@ -2,7 +2,7 @@
 
 An upgraded version of base inline link tool with your server's search.
 
-![](assets/example.gif)
+![](example/assets/example.png)
 
 ## Installation
 
@@ -140,3 +140,18 @@ i18n: {
   }
 },
 ```
+
+# Support maintainance
+
+If you're using this tool and editor.js in your business, please consider supporting their maintenance and evolution.
+
+[http://opencollective.com/editorjs](http://opencollective.com/editorjs)
+
+# About CodeX
+
+CodeX is a team of digital specialists around the world interested in building high-quality open source products on a global market. 
+We are [open](https://codex.so/join) for young people who want to constantly improve their skills and grow professionally with experiments in leading technologies.
+
+[https://codex.so](https://codex.so)
+
+[http://twitter.com/codex_team](http://twitter.com/codex_team)
