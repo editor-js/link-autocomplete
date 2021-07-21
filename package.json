@@ -1,0 +1,33 @@
+{
+  "name": "@editorjs/link-autocomplete",
+  "version": "0.0.0",
+  "description": "Link Autocomplete Inline Tool for EditorJS",
+  "main": "dist/link-autocomplete.js",
+  "repository": "https://github.com/editor-js/link-autocomplete.git",
+  "author": "CodeX <team@codex.so>",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack --mode production",
+    "build:dev": "webpack --mode development --watch",
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "server": "nodemon example/server.js"
+  },
+  "devDependencies": {
+    "codex-notifier": "^1.1.2",
+    "css-loader": "^5.0.2",
+    "eslint": "^7.30.0",
+    "eslint-config-codex": "^1.6.2",
+    "eslint-loader": "^4.0.2",
+    "express": "^4.17.1",
+    "nodemon": "^2.0.7",
+    "postcss": "^8.2.6",
+    "postcss-loader": "^4.2.0",
+    "postcss-nested": "^5.0.3",
+    "postcss-nested-ancestors": "^2.0.0",
+    "postcss-simple-vars": "^6.0.3",
+    "raw-loader": "^4.0.2",
+    "style-loader": "^2.0.0",
+    "webpack": "^5.24.1",
+    "webpack-cli": "^4.5.0"
+  }
+}
