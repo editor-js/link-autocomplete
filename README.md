@@ -75,19 +75,18 @@ Content-Type: `application/json`.
 
 ```json
 {
-  success: true,
-  items: [
+  "success": true,
+  "items": [
     {
-      href: `https://codex.so/media`,
-      name: `The first item`,
-      description: ''
+      "href": "https://codex.so/editor",
+      "name": "The first item",
+      "description": ""
     },
     {
-      href: `https://codex.so/editor`,
-      name: `The second item`
-      description: ''
-    },
-    ...
+      "href": "https://codex.so/media",
+      "name": "The second item",
+      "description": ""
+    }
   ]
 }
 ```
