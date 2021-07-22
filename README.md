@@ -141,7 +141,7 @@ i18n: {
 },
 ```
 
-# Support maintainance
+# Support maintenance 🎖
 
 If you're using this tool and editor.js in your business, please consider supporting their maintenance and evolution.
 
@@ -149,9 +149,10 @@ If you're using this tool and editor.js in your business, please consider suppor
 
 # About CodeX
 
-CodeX is a team of digital specialists around the world interested in building high-quality open source products on a global market. 
-We are [open](https://codex.so/join) for young people who want to constantly improve their skills and grow professionally with experiments in leading technologies.
+<img align="right" width="100" height="100" src="https://codex.so/public/app/img/codex-logo.svg" hspace="50">
 
-[https://codex.so](https://codex.so)
+CodeX is a team of digital specialists around the world interested in building high-quality open source products on a global market. We are [open](https://codex.so/join) for young people who want to constantly improve their skills and grow professionally with experiments in leading technologies.
 
-[http://twitter.com/codex_team](http://twitter.com/codex_team)
+| 🌐 | Join  👋  | Twitter | Instagram |
+| -- | -- | -- | -- |
+| [codex.so](https://codex.so) | [codex.so/join](https://codex.so/join) |[@codex_team](http://twitter.com/codex_team) | [@codex_team](http://instagram.com/codex_team) |
