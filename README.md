@@ -1,8 +1,6 @@
-# Link Autocomplete
+# Mentions
 
-An upgraded version of base inline link tool with your server's search.
-
-![](example/assets/example.png)
+Allows searching of a user API in order to add mentions to an EditorJS instance.
 
 ## Installation
 
@@ -11,11 +9,7 @@ An upgraded version of base inline link tool with your server's search.
 Get the package
 
 ```shell
-npm i --save-dev @editorjs/link-autocomplete
-```
-
-```shell
-yarn add -D @editorjs/link-autocomplete
+npm i --save-dev @mrpritchett/editorjs-mentions
 ```
 
 ### Load from CDN
@@ -23,7 +17,7 @@ yarn add -D @editorjs/link-autocomplete
 You can use package from jsDelivr CDN.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@editorjs/link-autocomplete"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mrpritchett/editorjs-mentions"></script>
 ```
 
 ## Usage
@@ -33,27 +27,27 @@ Add a new Tool to the `tools` property of the Editor.js initial config.
 ```javascript
 var editor = EditorJS({
   ...
- 
+
   /**
    * Tools list
    */
   tools: {
-    link: {
-      class: LinkAutocomplete,
+    mention: {
+      class: MentionTool,
       config: {
         endpoint: 'http://localhost:3000/',
         queryParam: 'search'
       }
     }
   },
-  
+
   ...
 });
 ```
 
 ## Config Params
 
-Search requests will be sent to the server by `GET` requests with a search string as a query param. 
+Search requests will be sent to the server by `GET` requests with a search string as a query param.
 
 List of server connection params which may be configured.
 
@@ -61,15 +55,12 @@ List of server connection params which may be configured.
 
 `queryParam` — param name to be sent with the search string.
 
-If there is no `endpoint` then tool will work only for pasted links.
-
 ## Server response data format
 
 For endpoint requests server **should** answer with a JSON containing following properties:
 
-- `success` (`boolean`) — state of processing: `true` or `false`  
-- `items` (`{name: string, href: string, description?: string}`) — an array of found items. Each item *must* contain `name` and `href` params. The `description`
-param is optional. You can also return any other fields which will be stored in a link dataset.
+- `success` (`boolean`) — state of processing: `true` or `false`
+- `items` (`{name: string, profile_photo?: string}`) — an array of found items. Each item *must* contain `name` param. The `profile_photo`param is optional. You can also return any other fields which will be stored in a link dataset.
 
 Content-Type: `application/json`.
 
@@ -78,14 +69,12 @@ Content-Type: `application/json`.
   "success": true,
   "items": [
     {
-      "href": "https://codex.so/editor",
-      "name": "The first item",
-      "description": ""
+      "profile_photo": "http://placehold.it/300x200",
+      "name": "John Doe",
     },
     {
-      "href": "https://codex.so/media",
-      "name": "The second item",
-      "description": ""
+      "href": "http://placehold.it/300x200",
+      "name": "Jane Doe",
     }
   ]
 }
@@ -93,9 +82,9 @@ Content-Type: `application/json`.
 
 ## Output data
 
-Marked text will be wrapped with a `a` tag as a usual link.
+Marked text will be wrapped with a `span` tag.
 
-Additional data will be store in element's dataset: `data-name`, `data-description` and other custom fields.
+Additional data will be store in element's dataset: `data-name`, `data-profile_photo` and other custom fields.
 
 ```json
 {
@@ -108,51 +97,4 @@ Additional data will be store in element's dataset: `data-name`, `data-descripti
 
 ## Shortcut
 
-By default, shortcut `CMD (CTRL) + K` is used for pasting links as usual.
-
-## I18n
-
-There is a few phrases to be translated. 
-
-UI items:
-
-- `Paste or search` — placeholder for an input field if server endpoint passed.
-- `Paste a link` — placeholder for the same field if server endpoint is missing.
-
-Error messages:
-
-- `Cannot process search request because of` — message before error's text in notification for a bad server response.
-- `Server responded with invalid data` — bad server's response
-- `Link URL is invalid` — pasted link url is bad 
-
-```
-i18n: {
-  messages: {
-    tools: {
-      LinkAutocomplete: {
-        'Paste or search': '...',
-        'Paste a link': '...',
-        'Cannot process search request because of': '...',
-        'Server responded with invalid data': '...',
-        'Link URL is invalid': '...'
-      }
-    }
-  }
-},
-```
-
-# Support maintenance 🎖
-
-If you're using this tool and editor.js in your business, please consider supporting their maintenance and evolution.
-
-[http://opencollective.com/editorjs](http://opencollective.com/editorjs)
-
-# About CodeX
-
-<img align="right" width="100" height="100" src="https://codex.so/public/app/img/codex-logo.svg" hspace="50">
-
-CodeX is a team of digital specialists around the world interested in building high-quality open source products on a global market. We are [open](https://codex.so/join) for young people who want to constantly improve their skills and grow professionally with experiments in leading technologies.
-
-| 🌐 | Join  👋  | Twitter | Instagram |
-| -- | -- | -- | -- |
-| [codex.so](https://codex.so) | [codex.so/join](https://codex.so/join) |[@codex_team](http://twitter.com/codex_team) | [@codex_team](http://instagram.com/codex_team) |
+By default, shortcut `CMD (CTRL) + 2` is used for pasting links as usual.
