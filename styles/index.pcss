@@ -11,7 +11,15 @@ $loader-color: rgba(29, 32, 43, 0.3);
 
     &__actions-wrapper {
         border-top: 1px solid $color-gray-line;
-        width: 200px;
+        width: 375px;
+    }
+
+    &__fields-wrapper {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        align-items: center;
     }
 
     &__field {
@@ -35,6 +43,19 @@ $loader-color: rgba(29, 32, 43, 0.3);
             &::placeholder {
                 color: $color-text-second;
             }
+        }
+
+        &-checkbox {
+            margin-left: 6px;
+            position: relative;
+            top: 2px;
+        }
+
+        &-label {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: -0.15px;
+            font-family: inherit;
         }
 
         /**
@@ -64,6 +85,12 @@ $loader-color: rgba(29, 32, 43, 0.3);
             animation: ce-link-autocomplete__spin 1s linear infinite;
             opacity: 1;
         }
+    }
+
+    &__option-icon svg {
+        width: 16px;
+        height: 16px;
+        padding: 0px 5px 3px 10px;
     }
 
     &__items {
@@ -115,7 +142,7 @@ $loader-color: rgba(29, 32, 43, 0.3);
 
     &__link-data {
         &-wrapper {
-            width: 200px;
+            width: 375px;
             outline: none;
             border: 0;
             border-radius: 4px;
@@ -137,7 +164,7 @@ $loader-color: rgba(29, 32, 43, 0.3);
             text-overflow: ellipsis;
         }
 
-        &-description {
+        &-description, &-new-tab {
             color: #7b7e89;
 
             font-size: 12px;
@@ -147,6 +174,12 @@ $loader-color: rgba(29, 32, 43, 0.3);
             overflow:hidden;
             white-space:nowrap;
             text-overflow: ellipsis;
+        }
+
+        &-new-tab svg {
+            width: 10px;
+            height: 10px;
+            padding-bottom: 2px;
         }
 
         &-url {

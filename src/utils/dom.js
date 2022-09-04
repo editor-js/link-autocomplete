@@ -98,4 +98,3 @@ export function isElement(node) {
 
   return node && node.nodeType && node.nodeType === Node.ELEMENT_NODE;
 }
-
