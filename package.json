@@ -13,6 +13,7 @@
     "server": "nodemon example/server.js"
   },
   "devDependencies": {
+    "@codexteam/icons": "^0.0.5",
     "codex-notifier": "^1.1.2",
     "css-loader": "^5.0.2",
     "eslint": "^7.30.0",
