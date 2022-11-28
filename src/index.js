@@ -227,7 +227,7 @@ export default class LinkAutocomplete {
      * @type {HTMLSpanElement}
      */
     this.nodes.toolButtonLink = Dom.make('span', LinkAutocomplete.CSS.iconWrapper, {
-      innerHTML: require('../icons/link.svg'),
+      innerHTML: require('@codexteam/icons').IconLink,
     });
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonLink);
 
@@ -237,7 +237,7 @@ export default class LinkAutocomplete {
      * @type {HTMLSpanElement}
      */
     this.nodes.toolButtonUnlink = Dom.make('span', LinkAutocomplete.CSS.iconWrapper, {
-      innerHTML: require('../icons/unlink.svg'),
+      innerHTML: require('@codexteam/icons').IconUnlink,
     });
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonUnlink);
     this.toggleVisibility(this.nodes.toolButtonUnlink, false);
