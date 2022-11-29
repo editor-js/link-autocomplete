@@ -7,7 +7,7 @@ import './../styles/index.pcss';
  * Import deps
  */
 import notifier from 'codex-notifier';
-
+import { IconUnlink, IconLink } from '@codexteam/icons';
 /**
  * Import functions
  */
@@ -227,7 +227,7 @@ export default class LinkAutocomplete {
      * @type {HTMLSpanElement}
      */
     this.nodes.toolButtonLink = Dom.make('span', LinkAutocomplete.CSS.iconWrapper, {
-      innerHTML: require('@codexteam/icons').IconLink,
+      innerHTML: IconLink,
     });
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonLink);
 
@@ -237,7 +237,7 @@ export default class LinkAutocomplete {
      * @type {HTMLSpanElement}
      */
     this.nodes.toolButtonUnlink = Dom.make('span', LinkAutocomplete.CSS.iconWrapper, {
-      innerHTML: require('@codexteam/icons').IconUnlink,
+      innerHTML: IconUnlink,
     });
     this.nodes.toolButtons.appendChild(this.nodes.toolButtonUnlink);
     this.toggleVisibility(this.nodes.toolButtonUnlink, false);
