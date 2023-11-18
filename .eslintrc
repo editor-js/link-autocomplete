@@ -3,6 +3,7 @@
     "codex"
   ],
   "rules": {
-    "jsdoc/no-undefined-types": "off"
+    "jsdoc/no-undefined-types": "off",
+    "no-control-regex": 0
   }
 }

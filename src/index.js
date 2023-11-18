@@ -28,6 +28,9 @@ const DICTIONARY = {
   searchRequestError: 'Cannot process search request because of',
   invalidServerData: 'Server responded with invalid data',
   invalidUrl: 'Link URL is invalid',
+  openInNewTab: 'Open in new tab',
+  blankTarget: 'Opens in a new tab',
+  noTarget: 'Opens in same tab',
 };
 
 /**
@@ -106,9 +109,14 @@ export default class LinkAutocomplete {
 
       actionsWrapper: 'ce-link-autocomplete__actions-wrapper',
 
+      fieldsWrapper: 'ce-link-autocomplete__fields-wrapper',
       field: 'ce-link-autocomplete__field',
       fieldLoading: 'ce-link-autocomplete__field--loading',
       fieldInput: 'ce-link-autocomplete__field-input',
+      fieldCheckbox: 'ce-link-autocomplete__field-checkbox',
+      fieldLabel: 'ce-link-autocomplete__field-label',
+
+      optionIcon: 'ce-link-autocomplete__option-icon',
 
       foundItems: 'ce-link-autocomplete__items',
 
@@ -121,6 +129,7 @@ export default class LinkAutocomplete {
       linkDataTitleWrapper: 'ce-link-autocomplete__link-data-title-wrapper',
       linkDataName: 'ce-link-autocomplete__link-data-name',
       linkDataDescription: 'ce-link-autocomplete__link-data-description',
+      linkDataNewTab: 'ce-link-autocomplete__link-data-new-tab',
       linkDataURL: 'ce-link-autocomplete__link-data-url',
     };
   }
@@ -154,9 +163,13 @@ export default class LinkAutocomplete {
      *   |- toolButtonUnlink
      *
      * actionsWrapper
-     *   |- inputWrapper
-     *   |    |- inputField
-     *   |    |- loader
+     *   |- fieldsWrapper
+     *   |    |- inputWrapper
+     *   |    |    |- inputField
+     *   |    |    |- loader
+     *   |    |- checkboxWrapper
+     *   |    |    |- checkboxLabel
+     *   |    |    |    |- checkboxField
      *   |
      *   |- searchResults
      *   |    |- searchItemWrapper
@@ -166,9 +179,10 @@ export default class LinkAutocomplete {
      *   |    |- ...
      *   |
      *   |- linkDataWrapper
-     *        |- URL
      *        |- name
      *        |- description
+     *        |- newTab
+     *        |- URL
      */
     this.nodes = {
       toolButtons: null,
@@ -176,8 +190,12 @@ export default class LinkAutocomplete {
       toolButtonUnlink: null,
 
       actionsWrapper: null,
+      fieldsWrapper: null,
       inputWrapper: null,
       inputField: null,
+      checkboxWrapper: null,
+      checkboxField: null,
+      checkboxLabel: null,
 
       searchResults: null,
 
@@ -200,12 +218,18 @@ export default class LinkAutocomplete {
       ENTER: 13,
       UP: 38,
       DOWN: 40,
+      TAB: 9,
     };
 
     /**
      * Define debounce timer
      */
     this.typingTimer = null;
+
+    /**
+     * Track whether links should open in a new tab
+     */
+    this.openInNewTab = false;
   }
 
   /**
@@ -266,11 +290,41 @@ export default class LinkAutocomplete {
      */
     this.nodes.inputWrapper = Dom.make('div', LinkAutocomplete.CSS.field);
     this.nodes.inputField = Dom.make('input', LinkAutocomplete.CSS.fieldInput, {
-      placeholder: this.api.i18n.t(this.isServerEnabled ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink),
+      placeholder: this.api.i18n.t(this.isServerEnabled() ? DICTIONARY.pasteOrSearch : DICTIONARY.pasteALink),
     });
 
     this.nodes.inputWrapper.appendChild(this.nodes.inputField);
     this.toggleVisibility(this.nodes.inputWrapper, false);
+
+    /**
+     * Render checkbox field
+     *
+     * @type {HTMLDivElement}
+     */
+    this.nodes.checkboxWrapper = Dom.make('div', LinkAutocomplete.CSS.field);
+    this.nodes.checkboxField = Dom.make('input', LinkAutocomplete.CSS.fieldCheckbox, {
+      type: 'checkbox',
+      title: DICTIONARY.openInNewTab,
+    });
+
+    this.nodes.checkboxLabel = Dom.make('label', [LinkAutocomplete.CSS.fieldLabel, LinkAutocomplete.CSS.optionIcon]);
+    this.nodes.checkboxLabel.innerHTML = require('../icons/newtab.svg') + DICTIONARY.openInNewTab;
+
+    this.nodes.checkboxLabel.appendChild(this.nodes.checkboxField);
+    this.nodes.checkboxWrapper.appendChild(this.nodes.checkboxLabel);
+    this.toggleVisibility(this.nodes.checkboxWrapper, false);
+
+    /**
+     * Render fields wrapper
+     *
+     * @type {HTMLDivElement}
+     */
+    this.nodes.fieldsWrapper = Dom.make('div', LinkAutocomplete.CSS.fieldsWrapper);
+    this.nodes.fieldsWrapper.append(
+      this.nodes.inputWrapper,
+      this.nodes.checkboxWrapper
+    );
+    this.toggleVisibility(this.nodes.fieldsWrapper, false);
 
     /**
      * Render search results
@@ -311,14 +365,20 @@ export default class LinkAutocomplete {
     });
 
     /**
-     * Listen to pressed enter key or up and down arrows
+     * Listen to pressed enter, up, down, tab, and shift keys
      */
     this.nodes.inputField.addEventListener('keydown', this.fieldKeydownHandler.bind(this));
+    this.nodes.checkboxField.addEventListener('keydown', this.fieldKeydownHandler.bind(this));
 
     /**
      * Listen to input
      */
     this.nodes.inputField.addEventListener('input', this.fieldInputHandler.bind(this));
+
+    /**
+     * Listen to checkbox
+     */
+    this.nodes.checkboxField.addEventListener('change', this.fieldCheckboxHandler.bind(this));
 
     /**
      * Render link data block
@@ -333,7 +393,11 @@ export default class LinkAutocomplete {
     this.nodes.linkDataName = Dom.make('div', LinkAutocomplete.CSS.linkDataName);
     this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataName);
     this.nodes.linkDataDescription = Dom.make('div', LinkAutocomplete.CSS.linkDataDescription);
-    this.nodes.linkDataTitleWrapper.appendChild(this.nodes.linkDataDescription);
+    this.nodes.linkDataNewTab = Dom.make('div', LinkAutocomplete.CSS.linkDataNewTab);
+    this.nodes.linkDataTitleWrapper.append(
+      this.nodes.linkDataDescription,
+      this.nodes.linkDataNewTab
+    );
 
     this.nodes.linkDataURL = Dom.make('A', LinkAutocomplete.CSS.linkDataURL);
     this.nodes.linkDataWrapper.appendChild(this.nodes.linkDataURL);
@@ -341,9 +405,11 @@ export default class LinkAutocomplete {
     /**
      * Compose actions block
      */
-    this.nodes.actionsWrapper.appendChild(this.nodes.inputWrapper);
-    this.nodes.actionsWrapper.appendChild(this.nodes.searchResults);
-    this.nodes.actionsWrapper.appendChild(this.nodes.linkDataWrapper);
+    this.nodes.actionsWrapper.append(
+      this.nodes.fieldsWrapper,
+      this.nodes.searchResults,
+      this.nodes.linkDataWrapper
+    );
 
     return this.nodes.actionsWrapper;
   }
@@ -355,13 +421,14 @@ export default class LinkAutocomplete {
    * @returns {void}
    */
   fieldKeydownHandler(event) {
-    const isArrowKey = [this.KEYS.UP, this.KEYS.DOWN].includes(event.keyCode);
+    const isUpOrDownKey = [this.KEYS.UP, this.KEYS.DOWN].includes(event.keyCode);
     const isEnterKey = this.KEYS.ENTER === event.keyCode;
+    const isTabKey = this.KEYS.TAB === event.keyCode;
 
     /**
-     * If key is not an arrow or enter
+     * If key is not an arrow, enter, or tab
      */
-    if (!isArrowKey && !isEnterKey) {
+    if (!isUpOrDownKey && !isEnterKey && !isTabKey) {
       return;
     }
 
@@ -376,21 +443,40 @@ export default class LinkAutocomplete {
      */
     switch (true) {
       /**
-       * Handle arrow keys
+       * Handle up or down arrow keys
        */
-      case isArrowKey: {
+      case isUpOrDownKey: {
+        console.log(event.key);
         const direction = event.keyCode === this.KEYS.DOWN ? NavDirection.Next : NavDirection.Previous;
 
-        this.navigate(direction);
+        this.navigateVertically(direction);
         break;
       }
 
       /**
        * Handle Enter key
        */
-      case isEnterKey:
+      case isEnterKey: {
+        console.log(event.key);
         this.processEnterKeyPressed();
         break;
+      }
+
+      /**
+       * Handle tab and shift keys
+       */
+      case isTabKey: {
+        let direction;
+
+        if (event.keyCode === this.KEYS.TAB) {
+          direction = NavDirection.Next;
+          if (event.shiftKey) {
+            direction = NavDirection.Previous;
+          }
+        }
+        this.navigateHorizontally(direction);
+        break;
+      }
     }
   }
 
@@ -434,7 +520,7 @@ export default class LinkAutocomplete {
     /**
      * If no server endpoint then do nothing
      */
-    if (!this.isServerEnabled) {
+    if (!this.isServerEnabled()) {
       return;
     }
 
@@ -465,6 +551,16 @@ export default class LinkAutocomplete {
   }
 
   /**
+   * Input event listener for a input field
+   *
+   * @param {KeyboardEvent} event — input event
+   * @returns {void}
+   */
+  fieldCheckboxHandler(event) {
+    this.openInNewTab = event.target.value === 'on';
+  }
+
+  /**
    * Hides / shows loader
    *
    * @param {boolean} state - true to show
@@ -475,12 +571,29 @@ export default class LinkAutocomplete {
   }
 
   /**
+   * Navigate between inputs
+   *
+   * @param {NavDirection} direction - next or previous
+   * @returns {void}
+   */
+  navigateHorizontally(direction) {
+    const fields = this.nodes.fieldsWrapper.querySelectorAll('input');
+    let i = Array.prototype.indexOf.call(fields, document.activeElement);
+
+    if (i < fields.length - 1 && direction === NavDirection.Next) {
+      fields.item(++i).focus();
+    } else if (i > 0 && direction === NavDirection.Previous) {
+      fields.item(--i).focus();
+    }
+  }
+
+  /**
    * Navigate found items
    *
    * @param {NavDirection} direction - next or previous
    * @returns {void}
    */
-  navigate(direction) {
+  navigateVertically(direction) {
     /**
      * Getting search items
      */
@@ -704,6 +817,10 @@ export default class LinkAutocomplete {
      */
     const newLink = this.selection.findParentTag(this.tagName);
 
+    if (this.openInNewTab) {
+      newLink.target = '_blank';
+    }
+
     /**
      * Fill up link element's dataset
      */
@@ -757,10 +874,12 @@ export default class LinkAutocomplete {
      */
     if (!isLinkSelected) {
       /**
-       * Show focused input field
+       * Show focused input field and checkbox
        */
+      this.toggleVisibility(this.nodes.fieldsWrapper, true);
       this.toggleVisibility(this.nodes.inputWrapper, true);
       this.nodes.inputField.focus();
+      this.toggleVisibility(this.nodes.checkboxWrapper, true);
     } else {
       /**
        * Get the nearest link tag
@@ -820,6 +939,7 @@ export default class LinkAutocomplete {
      */
     this.nodes.linkDataName.innerText = parentA.dataset.name || '';
     this.nodes.linkDataDescription.innerText = parentA.dataset.description || '';
+    this.nodes.linkDataNewTab.innerHTML = require('../icons/newtab.svg') + ' ' + (parentA.target === '_blank' ? DICTIONARY.blankTarget : DICTIONARY.noTarget);
     this.nodes.linkDataURL.innerText = parentA.href || '';
     this.nodes.linkDataURL.href = parentA.href || '';
     this.nodes.linkDataURL.target = '_blank';

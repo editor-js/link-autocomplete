@@ -96,6 +96,8 @@ export class SelectionUtils {
 
   /**
    * Methods return boolean that true if selection exists on the page
+   *
+   * @returns {boolean}
    */
   static get isSelectionExists() {
     const selection = SelectionUtils.get();
@@ -208,8 +210,8 @@ export class SelectionUtils {
   /**
    * Set focus to contenteditable or native input element
    *
-   * @param element - element where to set focus
-   * @param offset - offset of cursor
+   * @param {HTMLElement} element - element where to set focus
+   * @param {number} offset - offset of cursor
    *
    * @returns {DOMRect} of range
    */

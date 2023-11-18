@@ -112,12 +112,15 @@ By default, shortcut `CMD (CTRL) + K` is used for pasting links as usual.
 
 ## I18n
 
-There is a few phrases to be translated. 
+There are a few phrases to be translated. 
 
 UI items:
 
 - `Paste or search` — placeholder for an input field if server endpoint passed.
 - `Paste a link` — placeholder for the same field if server endpoint is missing.
+- `Open in new tab` - label for checkbox field that changes link target.
+- `Opens in a new tab` - Descriptive text for existing links that open in a new tab.
+- `Opens in same tab` - Descriptive text for existing links that open in the same tab.
 
 Error messages:
 
@@ -132,6 +135,9 @@ i18n: {
       LinkAutocomplete: {
         'Paste or search': '...',
         'Paste a link': '...',
+        'Open in new tab': '...',
+        'Opens in a new tab': '...',
+        'Opens in same tab': '...',
         'Cannot process search request because of': '...',
         'Server responded with invalid data': '...',
         'Link URL is invalid': '...'
